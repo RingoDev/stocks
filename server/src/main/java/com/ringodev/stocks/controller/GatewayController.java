@@ -1,60 +1,37 @@
 package com.ringodev.stocks.controller;
 
-import com.ringodev.stocks.service.user.UserService;
+import com.ringodev.stocks.service.user.MyUserDetailsManager;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 
 
 @RestController
 @RequestMapping("api")
 public class GatewayController {
-    static class SimpleUser {
-        String name;
-        String pass;
 
-        @Override
-        public String toString() {
-            return "SimpleUser{" +
-                    "name='" + name + '\'' +
-                    '}';
-        }
-
-        SimpleUser() {
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public String getPass() {
-            return pass;
-        }
-
-        public void setPass(String pass) {
-            this.pass = pass;
-        }
-    }
-
-
-    UserService userService;
+    MyUserDetailsManager userService;
 
     @Autowired
-    GatewayController(UserService userService) {
+    GatewayController(MyUserDetailsManager userService) {
         this.userService = userService;
     }
 
-    @PostMapping("/addUser")
+    @PostMapping("/signup")
     @CrossOrigin(origins = "http://localhost:4200")
-    public void addUser(@RequestBody SimpleUser newUser) {
-        boolean result = userService.addUser(new User(newUser.getName(),newUser.getPass(),new ArrayList<>()));
-        if (result)System.out.println("ADDED USER" + newUser.toString());
-    }
+    public ResponseEntity<Object> signup(HttpServletRequest request) {
+        User user = new User(request.getParameter("username"),request.getParameter("password"),new ArrayList<>());
+        userService.createUser(user);
+        System.out.println("ADDED USER" + user.toString());
+        return new ResponseEntity<>(HttpStatus.OK);
 
+    }
 }
