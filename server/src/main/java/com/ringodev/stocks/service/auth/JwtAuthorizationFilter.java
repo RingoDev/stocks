@@ -1,6 +1,6 @@
 package com.ringodev.stocks.service.auth;
 
-import com.ringodev.stocks.security.SecurityConstants;
+import com.ringodev.stocks.service.auth.security.SecurityConstants;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.SignatureException;
 import org.slf4j.Logger;

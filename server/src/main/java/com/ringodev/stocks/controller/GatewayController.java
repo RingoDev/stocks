@@ -1,6 +1,6 @@
 package com.ringodev.stocks.controller;
 
-import com.ringodev.stocks.service.user.MyUserDetailsManager;
+import com.ringodev.stocks.service.user.UserDetailsManagerImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,13 +18,15 @@ import java.util.ArrayList;
 @RequestMapping("api")
 public class GatewayController {
 
-    MyUserDetailsManager userService;
+    UserDetailsManagerImpl userService;
 
     @Autowired
-    GatewayController(MyUserDetailsManager userService) {
+    GatewayController(UserDetailsManagerImpl userService) {
         this.userService = userService;
     }
 
+
+    // tries to signup a new user
     @PostMapping("/signup")
     @CrossOrigin(origins = "http://localhost:4200")
     public ResponseEntity<Object> signup(HttpServletRequest request) {
@@ -32,6 +34,5 @@ public class GatewayController {
         userService.createUser(user);
         System.out.println("ADDED USER" + user.toString());
         return new ResponseEntity<>(HttpStatus.OK);
-
     }
 }

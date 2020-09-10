@@ -1,4 +1,4 @@
-package com.ringodev.stocks.security;
+package com.ringodev.stocks.service.auth.security;
 
 /**
  * some constants for authentication

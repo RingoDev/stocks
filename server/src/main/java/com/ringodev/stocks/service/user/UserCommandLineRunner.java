@@ -22,9 +22,10 @@ public class UserCommandLineRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        repository.save(new UserEntity("ringodev", passwordEncoder.encode("12345")));
-        for (UserEntity user : repository.findAll()) {
-            System.out.println(user);
+        repository.save(new UserImpl("admin", passwordEncoder.encode("password"),Role.ROLE_ADMIN));
+        repository.save(new UserImpl("user", passwordEncoder.encode("password"),Role.ROLE_USER));
+        for (UserImpl user : repository.findAll()) {
+            System.out.println(user.toUserDetails());
         }
     }
 }
