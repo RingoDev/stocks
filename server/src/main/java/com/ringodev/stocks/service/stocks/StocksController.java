@@ -3,6 +3,10 @@ package com.ringodev.stocks.service.stocks;
 import com.ringodev.stocks.data.DataPoint;
 import com.ringodev.stocks.data.Stock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,33 +30,43 @@ public class StocksController {
         this.repository = repository;
     }
 
-    // tries to signup a new user
+    // tries to insert a csv file
     @PostMapping("/insert")
-    public void insertCSV(HttpServletRequest request) throws FileNotFoundException {
+    public ResponseEntity<Object> insertCSV(HttpServletRequest request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        System.out.println(auth);
+        if (!request.isUserInRole("ROLE_ADMIN")) {
+            System.out.println("Access to insert was denied");
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+
+        }
+
+        System.out.println("File inserting access was granted");
+
         String name = request.getParameter("name");
         Stock test = new Stock();
 
         boolean firstDone = false;
         // read in csv file
-        try (Scanner scanner = new Scanner(new File(name+".csv"));) {
+        try (Scanner scanner = new Scanner(new File(name + ".csv"))) {
 
             while (scanner.hasNextLine()) {
                 List<String> l = getStringsFromLine(scanner.nextLine());
-                if(!firstDone && l.get(0).equals("Date")){
+                if (!firstDone && l.get(0).equals("Date")) {
                     firstDone = true;
                     test.setName(name);
-                }
-
-
-                else {
+                } else {
                     test.addDataPoint(new DataPoint(l));
                 }
             }
-        } catch (ParseException e) {
+        } catch (ParseException | FileNotFoundException e) {
             e.printStackTrace();
+            System.out.println("Couldn't insert " + name);
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         repository.save(test);
-        System.out.println(repository.findById((long)1).orElseThrow());
+        if (repository.findByName(name) != null) System.out.println("Succesfully inserted " + name);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     static List<String> getStringsFromLine(String line) {

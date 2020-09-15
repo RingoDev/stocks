@@ -1,6 +1,7 @@
 package com.ringodev.stocks.data;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Transient;
 import java.text.ParseException;
@@ -8,13 +9,18 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+import static javax.persistence.GenerationType.AUTO;
+
 @Entity
-public class DataPoint implements Comparable<DataPoint>{
+public class DataPoint implements Comparable<DataPoint> {
 
     @Transient
-    static  SimpleDateFormat dateFormatter =new SimpleDateFormat("MMM dd yyyy");
+    static SimpleDateFormat dateFormatter = new SimpleDateFormat("MMM dd yyyy");
 
     @Id
+    @GeneratedValue(strategy = AUTO)
+    Long id;
+
     Date date;
     double open;
     double high;
@@ -23,7 +29,8 @@ public class DataPoint implements Comparable<DataPoint>{
     double adj_close;
     long volume;
 
-    public DataPoint(){}
+    public DataPoint() {
+    }
 
     public DataPoint(List<String> list) throws ParseException {
         this.date = dateFormatter.parse(list.get(0));
@@ -46,6 +53,15 @@ public class DataPoint implements Comparable<DataPoint>{
                 ", adj_close=" + adj_close +
                 ", volume=" + volume +
                 '}';
+    }
+
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public double getOpen() {
@@ -106,6 +122,6 @@ public class DataPoint implements Comparable<DataPoint>{
 
     @Override
     public int compareTo(DataPoint o) {
-        return -1*this.date.compareTo(o.date);
+        return -1 * this.date.compareTo(o.date);
     }
 }
