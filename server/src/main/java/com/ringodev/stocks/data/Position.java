@@ -21,7 +21,27 @@ public class Position {
 
     @JsonProperty("date")
     Date date;
-    double price;
+
+    @JsonProperty("quantity")
+    int quantity;
+
+    public Position(String stockRef, Date date, int quantity) {
+        this.stockRef = stockRef;
+        this.date = date;
+        this.quantity = quantity;
+    }
+
+    public Position(){
+
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
 
     public Long getId() {
         return id;
@@ -39,13 +59,7 @@ public class Position {
         this.date = date;
     }
 
-    public double getPrice() {
-        return price;
-    }
 
-    public void setPrice(double prize) {
-        this.price = prize;
-    }
     public String getStockRef() {
         return stockRef;
     }
@@ -60,7 +74,7 @@ public class Position {
                 "id=" + id +
                 ", stockRef='" + stockRef + '\'' +
                 ", date=" + date +
-                ", price=" + price +
+                ", quantity=" + quantity +
                 '}';
     }
 }

@@ -28,15 +28,15 @@ public class UserDataService {
         return repository.findByUsername(username);
     }
 
-    void addPosition(Position position, Principal principal) {
-        UserData data = repository.findByUsername(principal.getName());
+    public void addPosition(Position position, String username) {
+        UserData data = repository.findByUsername(username);
         if (data == null) {
             data = new UserData();
         }
         data.addPosition(position);
         repository.save(data);
         System.out.println("added Userdata");
-        System.out.println(repository.findByUsername(principal.getName()));
+        System.out.println(repository.findByUsername(username));
     }
 
     /**

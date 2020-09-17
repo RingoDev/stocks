@@ -31,7 +31,7 @@ public class UserDataController {
     // gets the userdata of the user
     @PostMapping("/addPosition")
     public ResponseEntity<Object> addPosition(@RequestBody Position position, Principal principal) {
-        userDataService.addPosition(position,principal);
+        userDataService.addPosition(position, principal.getName());
         return new ResponseEntity<>(HttpStatus.OK);
     }
 }
