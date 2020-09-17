@@ -3,12 +3,14 @@ package com.ringodev.stocks.service.user;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static javax.persistence.EnumType.STRING;
 import static javax.persistence.GenerationType.AUTO;
 
 @Entity
@@ -29,8 +31,7 @@ public class UserImpl {
     @Column()
     String email;
     @Column(nullable = false)
-    @Enumerated(STRING)
-    Role role;
+    GrantedAuthority auth;
     @Column(nullable = false)
     Boolean enabled = false;
     @Column(nullable = false)
@@ -40,20 +41,98 @@ public class UserImpl {
     }
 
     public UserImpl(String username, String password) {
-        this(username, password, Role.ROLE_USER, true, new Date());
+        this(username, password, new AuthorityImpl(Role.ROLE_USER), true, new Date());
 
     }
-    public UserImpl(String username, String password,Role role) {
-        this(username, password, role, true, new Date());
+
+    public UserImpl(User user){
+        this(user.getUsername(), user.getPassword(), user.getAuthorities().stream().findFirst().orElse(new AuthorityImpl(Role.ROLE_USER)), true, new Date());
+    }
+    public UserImpl(String username, String password,GrantedAuthority auth) {
+        this(username, password, auth, true, new Date());
     }
 
-    public UserImpl(String username, String password, Role role, boolean enabled, Date dateCreate) {
+    public UserImpl(String username, String password, GrantedAuthority auth, boolean enabled, Date dateCreate) {
         this.username = username;
         this.password = password;
-        this.role = role;
+        this.auth = auth;
         this.enabled = enabled;
         this.dateCreate = dateCreate;
     }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getFirstname() {
+        return firstname;
+    }
+
+    public void setFirstname(String firstname) {
+        this.firstname = firstname;
+    }
+
+    public String getLastname() {
+        return lastname;
+    }
+
+    public void setLastname(String lastname) {
+        this.lastname = lastname;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public GrantedAuthority getAuth() {
+        return auth;
+    }
+
+    public void setAuth(GrantedAuthority auth) {
+        this.auth = auth;
+    }
+
+    public Boolean getEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public Date getDateCreate() {
+        return dateCreate;
+    }
+
+    public void setDateCreate(Date dateCreate) {
+        this.dateCreate = dateCreate;
+    }
+
+
 
     @Override
     public String toString() {
@@ -64,7 +143,7 @@ public class UserImpl {
                 ", firstname='" + firstname + '\'' +
                 ", lastname='" + lastname + '\'' +
                 ", email='" + email + '\'' +
-                ", role=" + role +
+                ", auth=" + auth +
                 ", enabled=" + enabled +
                 ", dateCreate=" + dateCreate +
                 '}';
@@ -72,8 +151,7 @@ public class UserImpl {
 
     private List<GrantedAuthority> getAuthorities(){
         List<GrantedAuthority> list = new ArrayList<>();
-        GrantedAuthority auth = new AuthorityImpl(this.role);
-        list.add(auth);
+        list.add(this.auth);
         return list;
     }
 

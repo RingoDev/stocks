@@ -16,6 +16,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,6 +39,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) {
         String username = request.getParameter("username");
         String password = request.getParameter("password");
+        System.out.println(username + " is trying to log in");
 
         // add Username and Password to SimpleToken
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
@@ -48,7 +50,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response,
-                                            FilterChain filterChain, Authentication authentication) {
+                                            FilterChain filterChain, Authentication authentication) throws IOException {
         User user = ((User) authentication.getPrincipal());
 
         List<String> roles = user.getAuthorities()
@@ -66,15 +68,23 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                 .setIssuer(SecurityConstants.TOKEN_ISSUER)
                 .setAudience(SecurityConstants.TOKEN_AUDIENCE)
                 .setSubject(user.getUsername())
-                .setExpiration(new Date(System.currentTimeMillis() + (1000*60*60*60*4)))
+                .setExpiration(new Date(System.currentTimeMillis() + (1000 * 60 * 60 * 4)))
                 .claim("rol", roles)
                 .compact();
 
+
+        response.getWriter().write(token);
+        response.getWriter().flush();
+
         response.addHeader(SecurityConstants.TOKEN_HEADER, SecurityConstants.TOKEN_PREFIX + token);
     }
+
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) {
-        SecurityContextHolder.clearContext();
+
+                SecurityContextHolder.clearContext();
         System.out.println("Unsuccessful login");
-        }
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+    }
+
 }

@@ -2,10 +2,14 @@ package com.ringodev.stocks.service.user;
 
 import org.springframework.security.core.GrantedAuthority;
 
+import javax.persistence.Enumerated;
 import java.util.Objects;
+
+import static javax.persistence.EnumType.STRING;
 
 public class AuthorityImpl implements GrantedAuthority {
 
+    @Enumerated(STRING)
     Role role;
 
     public AuthorityImpl(Role role){
