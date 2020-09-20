@@ -25,11 +25,11 @@ public class StocksService {
         this.repository = repository;
     }
 
-    List<String> getStockList(){
+    List<String> getStockList() {
         return repository.findAll().stream().map(Stock::getName).collect(Collectors.toList());
     }
 
-    public ResponseEntity<Object> insertStock(String name){
+    public ResponseEntity<Object> insertStock(String name) {
         Stock test = new Stock();
 
         boolean firstDone = false;
@@ -66,5 +66,6 @@ public class StocksService {
         }
         return values;
     }
+
 
 }

@@ -2,11 +2,13 @@ package com.ringodev.stocks.service.userdata;
 
 import com.ringodev.stocks.data.Position;
 import com.ringodev.stocks.data.UserData;
+import com.ringodev.stocks.service.stocks.StocksService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.FileNotFoundException;
 import java.security.Principal;
 
 @RestController
@@ -14,10 +16,12 @@ import java.security.Principal;
 public class UserDataController {
 
     private final UserDataService userDataService;
+    private final StocksService stocksService;
 
     @Autowired
-    UserDataController(UserDataService userDataService) {
+    UserDataController(StocksService stocksService,UserDataService userDataService) {
         this.userDataService = userDataService;
+        this.stocksService = stocksService;
     }
 
     // gets the userdata of the user
@@ -25,7 +29,13 @@ public class UserDataController {
     public ResponseEntity<Object> getData(Principal principal) {
         UserData data = userDataService.getUserData(principal);
         if (data == null) return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        else return new ResponseEntity<>(data, HttpStatus.OK);
+        try{
+            data = userDataService.enrichUserData(data);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        System.out.println(data);
+        return new ResponseEntity<>(data, HttpStatus.OK);
     }
 
     // gets the userdata of the user

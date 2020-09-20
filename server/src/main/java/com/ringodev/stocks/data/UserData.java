@@ -13,6 +13,17 @@ public class UserData {
     @OneToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     List<Position> positions;
 
+    @Transient
+    List<CombinedPosition> combinedPositions;
+
+    public List<CombinedPosition> getCombinedPositions() {
+        return combinedPositions;
+    }
+
+    public void setCombinedPositions(List<CombinedPosition> combinedPositions) {
+        this.combinedPositions = combinedPositions;
+    }
+
     public String getUsername() {
         return username;
     }

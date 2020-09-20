@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Transient;
 import java.util.Date;
 
 import static javax.persistence.GenerationType.AUTO;
@@ -24,6 +25,30 @@ public class Position {
 
     @JsonProperty("quantity")
     int quantity;
+
+    @Transient
+    double buyValue;
+
+    @Transient
+    double currentValue;
+
+    public double getBuyValue() {
+        return buyValue;
+    }
+
+    public void setBuyValue(double buyValue) {
+        this.buyValue = buyValue;
+    }
+
+    public double getCurrentValue() {
+        return currentValue;
+    }
+
+    public void setCurrentValue(double currentValue) {
+        this.currentValue = currentValue;
+    }
+
+
 
     public Position(String stockRef, Date date, int quantity) {
         this.stockRef = stockRef;
@@ -75,6 +100,8 @@ public class Position {
                 ", stockRef='" + stockRef + '\'' +
                 ", date=" + date +
                 ", quantity=" + quantity +
+                ", buyValue=" + buyValue +
+                ", currentValue=" + currentValue +
                 '}';
     }
 }
