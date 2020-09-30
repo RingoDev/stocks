@@ -37,6 +37,8 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
                                     FilterChain filterChain) throws IOException, ServletException {
         UsernamePasswordAuthenticationToken authentication = getAuthentication(request);
         if (authentication == null) {
+            // change header
+            response.setIntHeader("expires",1);
             filterChain.doFilter(request, response);
             return;
         }

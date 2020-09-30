@@ -2,6 +2,7 @@ package com.ringodev.stocks.service.userdata;
 
 import com.ringodev.stocks.data.Position;
 import com.ringodev.stocks.data.UserData;
+import com.ringodev.stocks.data.UserStockData;
 import com.ringodev.stocks.service.stocks.StocksService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -36,6 +37,19 @@ public class UserDataController {
         }
         System.out.println(data);
         return new ResponseEntity<>(data, HttpStatus.OK);
+    }
+
+    @GetMapping("/stock")
+    public ResponseEntity<Object> getStockData(Principal principal) {
+        UserData data = userDataService.getUserData(principal);
+        if (data == null) return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        UserStockData stockData = null;
+        try{
+            stockData = userDataService.getUserStockData(data);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return new ResponseEntity<>(stockData, HttpStatus.OK);
     }
 
     // gets the userdata of the user

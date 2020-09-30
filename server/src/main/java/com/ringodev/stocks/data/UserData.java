@@ -7,10 +7,11 @@ import java.util.List;
 @Entity
 public class UserData {
 
+
     @Id
     String username;
 
-    @OneToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     List<Position> positions;
 
     @Transient
@@ -40,8 +41,8 @@ public class UserData {
         this.positions = positions;
     }
 
-    public void addPosition(Position position){
-        if (positions == null){
+    public void addPosition(Position position) {
+        if (positions == null) {
             positions = new ArrayList<>();
         }
         positions.add(position);

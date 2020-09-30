@@ -68,7 +68,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                 .setIssuer(SecurityConstants.TOKEN_ISSUER)
                 .setAudience(SecurityConstants.TOKEN_AUDIENCE)
                 .setSubject(user.getUsername())
-                .setExpiration(new Date(System.currentTimeMillis() + (1000 * 60 * 60 * 4)))
+                .setExpiration(new Date(System.currentTimeMillis() + ( 1000 * 60 *60 * 4)))//
                 .claim("rol", roles)
                 .compact();
 
@@ -82,7 +82,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) {
 
-                SecurityContextHolder.clearContext();
+        SecurityContextHolder.clearContext();
         System.out.println("Unsuccessful login");
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
     }

@@ -60,5 +60,6 @@ public class TestCommandLineRunner implements CommandLineRunner {
         // add TestPosition
 
         userDataService.addPosition(new Position("GM",new Date(2015-1900, Calendar.APRIL,28),50),user2.getUsername());
+        userDataService.addPosition(new Position("JNJ",new Date(2016-1900, Calendar.APRIL,28),10),user2.getUsername());
     }
 }

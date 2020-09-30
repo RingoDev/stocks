@@ -32,6 +32,32 @@ public class Position {
     @Transient
     double currentValue;
 
+    @Transient
+    MonthHistory history;
+
+    @Transient
+    boolean checked = true;
+
+
+    public MonthHistory getHistory() {
+        return history;
+    }
+
+    public void setHistory(MonthHistory history) {
+        this.history = history;
+    }
+
+
+
+    public boolean isChecked() {
+        return checked;
+    }
+
+    public void setChecked(boolean checked) {
+        this.checked = checked;
+    }
+
+
     public double getBuyValue() {
         return buyValue;
     }

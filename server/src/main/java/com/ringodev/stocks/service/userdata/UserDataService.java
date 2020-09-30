@@ -91,16 +91,22 @@ public class UserDataService {
             if (stock == null) throw new FileNotFoundException();
             position.setBuyValue(calculateBuyValue(position, stock));
             position.setCurrentValue(calculateCurrentValue(position, stock));
-
         }
 
         userData.setCombinedPositions(combinePositions(userData));
+
         return userData;
+    }
+
+    public UserStockData getUserStockData(UserData userData) throws FileNotFoundException {
+        List<Date> dates = initDates();
+        return new UserStockData(dates, enrichPositions(userData, dates));
+
     }
 
     // get all Positions as one DataObject
 
-    public List<CombinedPosition> combinePositions(UserData userData) throws FileNotFoundException {
+    private List<CombinedPosition> combinePositions(UserData userData) throws FileNotFoundException {
         List<CombinedPosition> list = new ArrayList<>();
 
         // initialize 28 long array with dates excluding saturdays and sundays
@@ -111,15 +117,37 @@ public class UserDataService {
                 Stock stock = stocksRepository.findByName(position.getStockRef());
                 if (stock == null) throw new FileNotFoundException();
                 DataPoint dp = getClosestDataPoint(date, stock.getHistory());
-                System.out.println(date + " Closest DataPoint:" + dp);
+                //System.out.println(date + " Closest DataPoint:" + dp);
                 if (dp == null) throw new RuntimeException("Couldn't get a DataPoint that closest matches the date");
                 combined.addValue(dp.getClose() * position.getQuantity());
-
             }
             list.add(combined);
         }
         return list;
     }
+
+    public List<Position> enrichPositions(UserData userData, List<Date> dates) throws FileNotFoundException {
+        List<Position> list = userData.getPositions();
+        for (Position position : list) {
+
+            Stock stock = stocksRepository.findByName(position.getStockRef());
+            if (stock == null) throw new FileNotFoundException();
+
+            MonthHistory hist = new MonthHistory(position.getStockRef());
+            for (Date date : dates) {
+                DataPoint dp = getClosestDataPoint(date, stock.getHistory());
+                if (dp == null) throw new RuntimeException("Couldn't get a DataPoint that closest matches the date");
+                hist.addDataPoint(dp,position.getQuantity());
+            }
+
+            position.setBuyValue(calculateBuyValue(position, stock));
+            position.setCurrentValue(calculateCurrentValue(position, stock));
+            position.setHistory(hist);
+        }
+        return list;
+    }
+
+
     private static List<Date> initDates() {
         List<Date> list = new ArrayList<>();
         Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
