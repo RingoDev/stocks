@@ -1,6 +1,9 @@
 package com.ringodev.stocks.service.stocks;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,25 +17,31 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping("api/stocks")
 public class StocksController {
 
-    private final StocksRepository repository;
+    Logger logger = LoggerFactory.getLogger(StocksController.class);
+
+
     private final StocksService stocksService;
+    private final TaskExecutor taskExecutor;
 
     @Autowired
-    StocksController(StocksRepository repository, StocksService stocksService) {
-        this.repository = repository;
+    StocksController(StocksService stocksService, TaskExecutor taskExecutor) {
+
         this.stocksService = stocksService;
+        this.taskExecutor = taskExecutor;
+
     }
 
     // tries to insert a csv file
-    @PostMapping("/insert")
+    @PostMapping("/insert/nyse")
     public ResponseEntity<Object> insertCSV(HttpServletRequest request) {
         if (!request.isUserInRole("ROLE_ADMIN")) {
             System.out.println("Access to insert was denied");
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
-        System.out.println("File inserting access was granted");
-        String name = request.getParameter("name");
-        return stocksService.insertStock(name);
+        logger.info("File inserting access was granted");
+        // should start in new thread
+        taskExecutor.execute(() -> stocksService.insertStocks(".data/stock_data_nyse/"));
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("/list")

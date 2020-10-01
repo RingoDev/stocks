@@ -3,10 +3,16 @@ package com.ringodev.stocks.controller;
 import com.ringodev.stocks.data.AlreadyExistsException;
 import com.ringodev.stocks.data.Position;
 import com.ringodev.stocks.service.stocks.StocksService;
-import com.ringodev.stocks.service.user.*;
+import com.ringodev.stocks.service.user.AuthorityImpl;
+import com.ringodev.stocks.service.user.Role;
+import com.ringodev.stocks.service.user.UserDetailsManagerImpl;
+import com.ringodev.stocks.service.user.UserImpl;
 import com.ringodev.stocks.service.userdata.UserDataService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -19,43 +25,62 @@ import java.util.Date;
 @Component
 public class TestCommandLineRunner implements CommandLineRunner {
 
+    private final Logger logger = LoggerFactory.getLogger(TestCommandLineRunner.class);
+
     private final UserDetailsManagerImpl userService;
     private final UserDataService userDataService;
     private final PasswordEncoder passwordEncoder;
     private final StocksService stocksService;
+    private final TaskExecutor taskExecutor;
 
     @Autowired
-    TestCommandLineRunner(StocksService stocksService,UserDataService userDataService,UserDetailsManagerImpl userService, PasswordEncoder passwordEncoder) {
+    TestCommandLineRunner(StocksService stocksService,UserDataService userDataService,UserDetailsManagerImpl userService, PasswordEncoder passwordEncoder, TaskExecutor taskExecutor) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.userDataService = userDataService;
         this.stocksService = stocksService;
+        this.taskExecutor = taskExecutor;
     }
 
     @Override
     public void run(String... args) throws AlreadyExistsException {
 
-        // add TestUsers
-        UserImpl user1 = new UserImpl("admin", passwordEncoder.encode("password"), new AuthorityImpl(Role.ROLE_ADMIN));
+//         add TestUsers
         UserImpl user2 = new UserImpl("admin@gmail.com", passwordEncoder.encode("password"),new AuthorityImpl(Role.ROLE_ADMIN));
-        UserImpl user3 = new UserImpl("user", passwordEncoder.encode("password"),new AuthorityImpl(Role.ROLE_USER));
+        UserImpl user3 = new UserImpl("user@gmail.com", passwordEncoder.encode("password"),new AuthorityImpl(Role.ROLE_USER));
 
-        userService.createUser(user1.toUserDetails());
-        userService.createUser(user2.toUserDetails());
-        userService.createUser(user3.toUserDetails());
-
-        userDataService.createUserData(user1.toUserDetails());
-        userDataService.createUserData(user2.toUserDetails());
-        userDataService.createUserData(user3.toUserDetails());
-
-        for (UserImpl user : userService.getAll()) {
-            System.out.println(user.toUserDetails());
-            System.out.println(userDataService.getUserData(user.toUserDetails().getUsername()));
+        if(userService.userExists(user2.toUserDetails().getUsername())){
+            logger.warn(user2.toUserDetails().getUsername()+ " already exists and cant be inserted");
+        }else{
+            userService.createUser(user2.toUserDetails());
         }
 
-        // insert Stockdata
-        stocksService.insertStock("GM");
-        stocksService.insertStock("JNJ");
+        if(userService.userExists(user3.toUserDetails().getUsername())){
+            logger.warn(user2.toUserDetails().getUsername()+ " already exists and cant be inserted");
+        }else{
+            userService.createUser(user3.toUserDetails());
+        }
+
+
+        try{
+            userDataService.createUserData(user2.toUserDetails());
+        }catch(AlreadyExistsException e){
+            logger.warn("UserData already existed for user: "+ user2.toUserDetails().getUsername());
+        }
+        try{
+            userDataService.createUserData(user3.toUserDetails());
+        }catch(AlreadyExistsException e){
+            logger.warn("UserData already existed for user: "+ user3.toUserDetails().getUsername());
+        }
+
+
+
+        for (UserImpl user : userService.getAll()) {
+            logger.info("added User: " + userDataService.getUserData(user.toUserDetails().getUsername()).toString());
+        }
+
+        // insert Stockdata in new Thread
+        taskExecutor.execute(() -> stocksService.insertStocks("data/stock_data_test/"));
 
         // add TestPosition
 

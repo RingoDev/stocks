@@ -2,6 +2,8 @@ package com.ringodev.stocks.service.userdata;
 
 import com.ringodev.stocks.data.*;
 import com.ringodev.stocks.service.stocks.StocksRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import java.util.*;
 @Service
 public class UserDataService {
 
+    private final Logger logger = LoggerFactory.getLogger(UserDataService.class);
     private final UserDataRepository userDataRepository;
     private final StocksRepository stocksRepository;
 
@@ -35,10 +38,16 @@ public class UserDataService {
         if (data == null) {
             data = new UserData();
         }
+
+        // check if stock exists in DB
+
+        if(stocksRepository.findByName(position.getStockRef()) == null){
+            logger.warn("Positions for Stock: "+position.getStockRef()+" cant be added because the stock doesn't exist.");
+            return;
+        }
         data.addPosition(position);
         userDataRepository.save(data);
-        System.out.println("added Userdata");
-        System.out.println(userDataRepository.findByUsername(username));
+        logger.info("added Userdata: "+userDataRepository.findByUsername(username).toString());
     }
 
     /**

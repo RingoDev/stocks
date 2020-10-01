@@ -34,12 +34,6 @@ public class DataPoint implements Comparable<DataPoint> {
 
     public DataPoint(List<String> list) throws ParseException {
 
-        // convert to european timezone
-//        Calendar cal = Calendar.getInstance();
-//
-//        cal.setTime(dateFormatter.parse(list.get(0)));
-//        cal.add(Calendar.DATE, 1);
-//        this.date = cal.getTime();
         this.date = dateFormatter.parse(list.get(0));
         this.open = Double.parseDouble(list.get(1));
         this.high = Double.parseDouble(list.get(2));

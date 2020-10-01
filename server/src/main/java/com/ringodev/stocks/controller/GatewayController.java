@@ -3,6 +3,8 @@ package com.ringodev.stocks.controller;
 import com.ringodev.stocks.data.AlreadyExistsException;
 import com.ringodev.stocks.service.user.UserDetailsManagerImpl;
 import com.ringodev.stocks.service.userdata.UserDataService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,7 @@ import java.util.ArrayList;
 @RequestMapping("api")
 public class GatewayController {
 
+    private final Logger logger = LoggerFactory.getLogger(GatewayController.class);
     private final UserDetailsManagerImpl userService;
     private final UserDataService userDataService;
 
@@ -34,14 +37,18 @@ public class GatewayController {
     @PostMapping("/signup")
     public ResponseEntity<Object> signup(HttpServletRequest request) {
         User user = new User(request.getParameter("username"), request.getParameter("password"), new ArrayList<>());
-        try{
-            userService.createUser(user);
-            userDataService.createUserData(user);
-        }catch(AlreadyExistsException e){
+        if(userService.userExists(user.getUsername())){
+            logger.warn(user.getUsername()+ " already exists and cant be inserted");
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }else{
+            userService.createUser(user);
+            try{
+                userDataService.createUserData(user);
+            }catch(AlreadyExistsException e){
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
         }
-
-        System.out.println("ADDED USER" + user.toString());
+        logger.info("ADDED USER" + user.toString());
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
