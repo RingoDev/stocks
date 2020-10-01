@@ -6,7 +6,7 @@ import com.ringodev.stocks.data.Stock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
@@ -24,15 +25,15 @@ public class StocksService {
 
     Logger logger = LoggerFactory.getLogger(StocksService.class);
     private final StocksRepository repository;
+    Environment env;
 
-    @Value("${DOCKER_ENV}")
-    private String docker;
     // check if run in docker container
     //
 
     @Autowired
-    StocksService(StocksRepository repository) {
+    StocksService(StocksRepository repository,Environment environment) {
         this.repository = repository;
+        this.env = environment;
     }
 
     List<String> getStockList() {
@@ -43,8 +44,8 @@ public class StocksService {
     public void insertStocks(String folder) {
 
         logger.info("Inserting Stocks from " + folder);
-
-        if(docker.equals("true"))folder = "/home/" + folder;
+logger.info(Arrays.toString(env.getActiveProfiles()));
+        if(List.of(env.getActiveProfiles()).contains("prod"))folder = "/home/" + folder;
 
         File f = new File(folder);
         String[] pathNames = f.list();

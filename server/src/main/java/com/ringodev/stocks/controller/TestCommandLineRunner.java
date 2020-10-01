@@ -62,17 +62,19 @@ public class TestCommandLineRunner implements CommandLineRunner {
         }
 
 
-        try{
-            userDataService.createUserData(user2.toUserDetails());
-        }catch(AlreadyExistsException e){
-            logger.warn("UserData already existed for user: "+ user2.toUserDetails().getUsername());
+        // only add testpositions if they dont exist
+        if(userDataService.getUserData(user2.getUsername()) == null){
+            try{
+                userDataService.createUserData(user2.toUserDetails());
+            }catch(AlreadyExistsException e){
+                logger.warn("UserData already existed for user: "+ user2.toUserDetails().getUsername());
+            }
+            try{
+                userDataService.createUserData(user3.toUserDetails());
+            }catch(AlreadyExistsException e){
+                logger.warn("UserData already existed for user: "+ user3.toUserDetails().getUsername());
+            }
         }
-        try{
-            userDataService.createUserData(user3.toUserDetails());
-        }catch(AlreadyExistsException e){
-            logger.warn("UserData already existed for user: "+ user3.toUserDetails().getUsername());
-        }
-
 
 
         for (UserImpl user : userService.getAll()) {
