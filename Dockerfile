@@ -1,10 +1,24 @@
-FROM openjdk:14-jdk-slim
+# Stage 1
+FROM openjdk:14 as builder
+
+COPY ./pom.xml ./pom.xml
+COPY mvnw .
+COPY .mvn .mvn
+COPY ./src ./src
+RUN ["chmod", "+x", "mvnw"]
+
+
+# RUN ./mvnw dependency:go-offline -B
 
 # building fat jar
-RUN mvn package -DskipTests
+RUN ./mvnw package -DskipTests
 
 # extracting fat jar
 RUN mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
+
+
+# Stage 2
+FROM openjdk:14-jdk-slim
 
 # adding user spring to group spring
 RUN addgroup --system spring && adduser --system spring --ingroup spring
@@ -14,9 +28,9 @@ USER spring
 
 # creating different layers
 ARG DEPENDENCY=target/dependency
-COPY ${DEPENDENCY}/BOOT-INF/lib /app/lib
-COPY ${DEPENDENCY}/META-INF /app/META-INF
-COPY ${DEPENDENCY}/BOOT-INF/classes /app
+COPY --from=builder ${DEPENDENCY}/BOOT-INF/lib /app/lib
+COPY --from=builder ${DEPENDENCY}/META-INF /app/META-INF
+COPY --from=builder ${DEPENDENCY}/BOOT-INF/classes /app
 
 # setting entrypoint
 ENTRYPOINT ["java","-cp","app:app/lib/*","com.ringodev.stocks.StocksApplication"]
