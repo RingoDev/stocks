@@ -4,11 +4,14 @@ import com.ringodev.stocks.data.Position;
 import com.ringodev.stocks.data.UserData;
 import com.ringodev.stocks.data.UserStockData;
 import com.ringodev.stocks.service.stocks.StocksService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.EntityNotFoundException;
 import java.io.FileNotFoundException;
 import java.security.Principal;
 
@@ -16,6 +19,7 @@ import java.security.Principal;
 @RequestMapping("api/user")
 public class UserDataController {
 
+    private final Logger logger = LoggerFactory.getLogger(UserDataController.class);
     private final UserDataService userDataService;
     private final StocksService stocksService;
 
@@ -35,7 +39,6 @@ public class UserDataController {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        System.out.println(data);
         return new ResponseEntity<>(data, HttpStatus.OK);
     }
 
@@ -57,5 +60,30 @@ public class UserDataController {
     public ResponseEntity<Object> addPosition(@RequestBody Position position, Principal principal) {
         userDataService.addPosition(position, principal.getName());
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PostMapping("/removePosition")
+    public ResponseEntity<Object> removePosition(@RequestBody IdObject idObject, Principal principal){
+        try{
+            userDataService.removePosition(idObject.getId(),principal.getName());
+        }catch(EntityNotFoundException e){
+            logger.info("Couldn't remove Position with id: "+idObject.getId()+" of User "+principal.getName()+" because it didn't exist");
+            return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
+
+    }
+
+
+    static class IdObject{
+        long id;
+
+        public long getId() {
+            return id;
+        }
+
+        public void setId(long id) {
+            this.id = id;
+        }
     }
 }

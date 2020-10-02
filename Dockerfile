@@ -1,14 +1,12 @@
 # Stage 1
 FROM openjdk:14 as builder
 
+# copying needed files and making .mvnw executable
 COPY ./pom.xml ./pom.xml
 COPY mvnw .
 COPY .mvn .mvn
 COPY ./src ./src
 RUN ["chmod", "+x", "mvnw"]
-
-
-# RUN ./mvnw dependency:go-offline -B
 
 # building fat jar
 RUN ./mvnw package -DskipTests

@@ -14,17 +14,6 @@ public class UserData {
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     List<Position> positions;
 
-    @Transient
-    List<CombinedPosition> combinedPositions;
-
-    public List<CombinedPosition> getCombinedPositions() {
-        return combinedPositions;
-    }
-
-    public void setCombinedPositions(List<CombinedPosition> combinedPositions) {
-        this.combinedPositions = combinedPositions;
-    }
-
     public String getUsername() {
         return username;
     }
@@ -46,6 +35,13 @@ public class UserData {
             positions = new ArrayList<>();
         }
         positions.add(position);
+    }
+
+    public boolean removePositionById(long id){
+        //check if such position exists
+        if(this.positions.stream().noneMatch(p -> p.getId() == id))return false;
+        this.positions.removeIf(p -> p.getId() == id);
+        return true;
     }
 
     @Override

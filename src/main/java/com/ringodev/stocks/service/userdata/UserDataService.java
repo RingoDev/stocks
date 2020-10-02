@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityNotFoundException;
 import java.io.FileNotFoundException;
 import java.security.Principal;
 import java.util.*;
@@ -48,6 +49,18 @@ public class UserDataService {
         data.addPosition(position);
         userDataRepository.save(data);
         logger.info("added Userdata: "+userDataRepository.findByUsername(username).toString());
+    }
+
+    /**
+     * removes a Position from the specific User's Userdata
+     * @param id the id of the position
+     * @param username the name of the user
+     */
+    public void removePosition(long id,String username){
+        UserData data = userDataRepository.findByUsername(username);
+        logger.info("removing Position with ID: "+ id);
+        if(!data.removePositionById(id))throw new EntityNotFoundException();
+        userDataRepository.flush();
     }
 
     /**
@@ -101,8 +114,8 @@ public class UserDataService {
             position.setBuyValue(calculateBuyValue(position, stock));
             position.setCurrentValue(calculateCurrentValue(position, stock));
         }
-
-        userData.setCombinedPositions(combinePositions(userData));
+// not doing this anymore combined positions are alculated on client
+//        userData.setCombinedPositions(combinePositions(userData));
 
         return userData;
     }
@@ -115,25 +128,25 @@ public class UserDataService {
 
     // get all Positions as one DataObject
 
-    private List<CombinedPosition> combinePositions(UserData userData) throws FileNotFoundException {
-        List<CombinedPosition> list = new ArrayList<>();
-
-        // initialize 28 long array with dates excluding saturdays and sundays
-        List<Date> dates = initDates();
-        for (Date date : dates) {
-            CombinedPosition combined = new CombinedPosition(date);
-            for (Position position : userData.getPositions()) {
-                Stock stock = stocksRepository.findByName(position.getStockRef());
-                if (stock == null) throw new FileNotFoundException();
-                DataPoint dp = getClosestDataPoint(date, stock.getHistory());
-                //System.out.println(date + " Closest DataPoint:" + dp);
-                if (dp == null) throw new RuntimeException("Couldn't get a DataPoint that closest matches the date");
-                combined.addValue(dp.getClose() * position.getQuantity());
-            }
-            list.add(combined);
-        }
-        return list;
-    }
+//    private List<CombinedPosition> combinePositions(UserData userData) throws FileNotFoundException {
+//        List<CombinedPosition> list = new ArrayList<>();
+//
+//        // initialize 28 long array with dates excluding saturdays and sundays
+//        List<Date> dates = initDates();
+//        for (Date date : dates) {
+//            CombinedPosition combined = new CombinedPosition(date);
+//            for (Position position : userData.getPositions()) {
+//                Stock stock = stocksRepository.findByName(position.getStockRef());
+//                if (stock == null) throw new FileNotFoundException();
+//                DataPoint dp = getClosestDataPoint(date, stock.getHistory());
+//                //System.out.println(date + " Closest DataPoint:" + dp);
+//                if (dp == null) throw new RuntimeException("Couldn't get a DataPoint that closest matches the date");
+//                combined.addValue(dp.getClose() * position.getQuantity());
+//            }
+//            list.add(combined);
+//        }
+//        return list;
+//    }
 
     public List<Position> enrichPositions(UserData userData, List<Date> dates) throws FileNotFoundException {
         List<Position> list = userData.getPositions();

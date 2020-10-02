@@ -11,8 +11,6 @@ public class UserStockData {
     List<DateObject> validDates;
     List<Position> positions;
 
-
-
     public List<Position> getPositions() {
         return positions;
     }
