@@ -19,7 +19,8 @@ target/
 *.iml
 *.ipr
 
-/data/
+/data/stock_data_nasdaq
+/data/stock_data_nyse
 
 ### NetBeans ###
 /nbproject/private/
