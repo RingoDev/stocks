@@ -83,10 +83,10 @@ to mount the data so java-spring can access it and insert into db add
 -v /path-to-data-on-host/:/home/data/
 `
 ```
-docker run --name=springTest \
---link mysql3 \
--v /home/ringo/Documents/IntellijProjects/Stocks/data/:/home/data/ \
--e MYSQL_HOST=mysql3 \
+docker run --name=spring1 \
+--link mysql1 \
+-v /home/data/:/home/data/ \
+-e MYSQL_HOST=mysql1 \
 -e SPRING_PROFILES_ACTIVE=prod \
 -p 8085:8085 \
 -t ringodev/spring-stocks-backend
