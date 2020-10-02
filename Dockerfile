@@ -1,7 +1,7 @@
 FROM openjdk:14-jdk-slim
 
 # building fat jar
-RUN ./mvnw package -DskipTests
+RUN mvn package -DskipTests
 
 # extracting fat jar
 RUN mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
