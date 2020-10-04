@@ -13,7 +13,7 @@
 * [x] Install MySQL DB on local machine
 
 ```
-docker run --name=mysql1 -p 6603:3306 -d mysql/mysql-server
+docker run --name=mysql1 -p 3306:3306 -d mysql/mysql-server
 docker logs mysql1 2>&1 | grep GENERATED
 docker exec -it mysql1 mysql -uroot -p
 ```
@@ -28,31 +28,30 @@ mysql> grant all on db_example.* to 'springuser'@'%'; -- Gives all privileges to
 creating spring boot docker image
 
 ```
-$ ./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=springio/gs-spring-boot-docker
+docker build --rm -t ringodev/spring-docker-stocks .
 ```
+
 
 running the mysql container
 
 running the spring container 
 
-linking mysql3 to mysql3
-setting MYSQL_HOST variable to mysql3
+linking mysql1 to mysql1
+setting MYSQL_HOST variable to mysql1
 porting mapping from 8085 to 8085
 
 ```
-docker run --name=spring2 --link mysql3 -e MYSQL_HOST=mysql3 -p 8085:8085 -t springio/gs-spring-boot-docker
+docker run --name=spring2 --link mysql1 -e MYSQL_HOST=mysql1 -p 8085:8085 -t springio/gs-spring-boot-docker
 ```
 
 building spring boot image with Docker file
 
-creating a fat jar with cmd:
+creating a fat jar with cmd and skipping tests:
 
 ```
-./mwnw package
+./mwnw package - DskipTests
 
 ```
-
-
 then unpacking fat jar with 
 ```
 mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
@@ -72,10 +71,6 @@ ENTRYPOINT ["java","-cp","app:app/lib/*","com.ringodev.stocks.StocksApplication"
 ```
 
 building docker image:
-
-`
-docker build --rm -t ringodev/spring-docker-stocks .fde
-`
 
 to mount the data so java-spring can access it and insert into db add
 
