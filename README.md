@@ -13,7 +13,7 @@
 * [x] Install MySQL DB on local machine
 
 ```
-docker run --name=mysql1 -p 6603:3306 -d mysql/mysql-server
+docker run --name=mysql1 -p 3306:3306 -d mysql/mysql-server
 docker logs mysql1 2>&1 | grep GENERATED
 docker exec -it mysql1 mysql -uroot -p
 ```
@@ -28,31 +28,30 @@ mysql> grant all on db_example.* to 'springuser'@'%'; -- Gives all privileges to
 creating spring boot docker image
 
 ```
-$ ./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=springio/gs-spring-boot-docker
+docker build --rm -t ringodev/spring-docker-stocks .
 ```
+
 
 running the mysql container
 
 running the spring container 
 
-linking mysql3 to mysql3
-setting MYSQL_HOST variable to mysql3
+linking mysql1 to mysql1
+setting MYSQL_HOST variable to mysql1
 porting mapping from 8085 to 8085
 
 ```
-docker run --name=spring2 --link mysql3 -e MYSQL_HOST=mysql3 -p 8085:8085 -t springio/gs-spring-boot-docker
+docker run --name=spring2 --link mysql1 -e MYSQL_HOST=mysql1 -p 8085:8085 -t springio/gs-spring-boot-docker
 ```
 
 building spring boot image with Docker file
 
-creating a fat jar with cmd:
+creating a fat jar with cmd and skipping tests:
 
 ```
-./mwnw package
+./mwnw package - DskipTests
 
 ```
-
-
 then unpacking fat jar with 
 ```
 mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
@@ -61,21 +60,44 @@ mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
 creating Dockerfile with split dependencies
 
 ```
+# Stage 1
+FROM openjdk:14 as builder
+
+# copying needed files and making .mvnw executable
+COPY ./pom.xml ./pom.xml
+COPY mvnw .
+COPY .mvn .mvn
+COPY ./src ./src
+RUN ["chmod", "+x", "mvnw"]
+
+# building fat jar
+RUN ./mvnw package -DskipTests
+
+# extracting fat jar
+RUN mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
+
+
+# Stage 2
 FROM openjdk:14-jdk-slim
+
+# adding user spring to group spring
 RUN addgroup --system spring && adduser --system spring --ingroup spring
+
+# setting app user to spring
 USER spring
+
+# creating different layers
 ARG DEPENDENCY=target/dependency
-COPY ${DEPENDENCY}/BOOT-INF/lib /app/lib
-COPY ${DEPENDENCY}/META-INF /app/META-INF
-COPY ${DEPENDENCY}/BOOT-INF/classes /app
+COPY --from=builder ${DEPENDENCY}/BOOT-INF/lib /app/lib
+COPY --from=builder ${DEPENDENCY}/META-INF /app/META-INF
+COPY --from=builder ${DEPENDENCY}/BOOT-INF/classes /app
+
+# setting entrypoint
 ENTRYPOINT ["java","-cp","app:app/lib/*","com.ringodev.stocks.StocksApplication"]
+
 ```
 
 building docker image:
-
-`
-docker build --rm -t ringodev/spring-docker-stocks .fde
-`
 
 to mount the data so java-spring can access it and insert into db add
 
@@ -107,6 +129,7 @@ docker run --name=spring1 \
   * [x] 2 GB RAM Instance will suffice for my needs right now, could also separate MySQL and Spring Instance
   * [ ] Separate DB and App Instances
 
+* setup ssl/tls to enable https
 
 * [ ] Install Docker
 * [ ] Install MySQL DockerImage
