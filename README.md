@@ -111,6 +111,8 @@ docker run --name=spring1 \
 -e MYSQL_HOST=mysql1 \
 -e SPRING_PROFILES_ACTIVE=prod \
 -p 8085:8085 \
+-d \
+--label=com.centurylinklabs.watchtower.enable=true \
 -t ringodev/spring-stocks-backend
 ```
 
