@@ -13,16 +13,16 @@
 * [x] Install MySQL DB on local machine
 
 ```
-docker run --name=mysql1 -p 3306:3306 -d mysql/mysql-server
+docker run --name=mysql1 -d mysql/mysql-server
 docker logs mysql1 2>&1 | grep GENERATED
 docker exec -it mysql1 mysql -uroot -p
 ```
 In Mysql instance:
 create spring user
 ```
-mysql> create database db_example; -- Creates the new database
+mysql> create database db_stocks; -- Creates the new database
 mysql> create user 'springuser'@'%' identified by 'ThePassword'; -- Creates the user
-mysql> grant all on db_example.* to 'springuser'@'%'; -- Gives all privileges to the new user on the newly created database
+mysql> grant all on db_stocks.* to 'springuser'@'%'; -- Gives all privileges to the new user on the newly created database
 ```
 
 creating spring boot docker image
@@ -105,12 +105,12 @@ to mount the data so java-spring can access it and insert into db add
 -v /path-to-data-on-host/:/home/data/
 `
 ```
-docker run --name=spring1 \
+docker run --name spring1 \
 --link mysql1 \
+-d \
 -v /home/data/:/home/data/ \
 -e MYSQL_HOST=mysql1 \
 -e SPRING_PROFILES_ACTIVE=prod \
--p 8085:8085 \
 -t ringodev/spring-stocks-backend
 ```
 

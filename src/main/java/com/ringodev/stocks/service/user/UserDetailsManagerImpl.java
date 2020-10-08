@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -26,6 +27,11 @@ public class UserDetailsManagerImpl implements UserDetailsManager {
         if (!userExists(userDetails.getUsername())) {
             userRepository.save(new UserImpl((User) userDetails));
         }
+    }
+
+    public User createGuest(){
+        // todo
+        return new User("","",new ArrayList<>());
     }
 
     public List<UserImpl> getAll(){

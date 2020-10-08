@@ -27,7 +27,7 @@ public class GatewayController {
 
 
     @Autowired
-    GatewayController(UserDetailsManagerImpl userService,UserDataService userDataService) {
+    GatewayController(UserDetailsManagerImpl userService, UserDataService userDataService) {
         this.userDataService = userDataService;
         this.userService = userService;
     }
@@ -37,18 +37,24 @@ public class GatewayController {
     @PostMapping("/signup")
     public ResponseEntity<Object> signup(HttpServletRequest request) {
         User user = new User(request.getParameter("username"), request.getParameter("password"), new ArrayList<>());
-        if(userService.userExists(user.getUsername())){
-            logger.warn(user.getUsername()+ " already exists and cant be inserted");
+        if (userService.userExists(user.getUsername())) {
+            logger.warn(user.getUsername() + " already exists and cant be inserted");
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }else{
+        } else {
             userService.createUser(user);
-            try{
+            try {
                 userDataService.createUserData(user);
-            }catch(AlreadyExistsException e){
+            } catch (AlreadyExistsException e) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
         }
         logger.info("ADDED USER" + user.toString());
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PostMapping("/createGuest")
+    public ResponseEntity<Object> createGuestAccount(HttpServletRequest request) {
+        User guest = userService.createGuest();
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
