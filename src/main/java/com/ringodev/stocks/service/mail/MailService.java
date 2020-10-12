@@ -44,7 +44,7 @@ public class MailService {
         JavaMailSender emailSender = getJavaMailSender();
 
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("noreply@ringodev.com");
+        message.setFrom("ringodev@ringodev.com");
         message.setTo(to);
         message.setSubject(subject);
         message.setText(text);
