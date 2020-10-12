@@ -2,6 +2,7 @@ package com.ringodev.stocks.controller;
 
 import com.ringodev.stocks.data.AlreadyExistsException;
 import com.ringodev.stocks.data.Position;
+import com.ringodev.stocks.service.mail.MailService;
 import com.ringodev.stocks.service.stocks.StocksService;
 import com.ringodev.stocks.service.user.AuthorityImpl;
 import com.ringodev.stocks.service.user.Role;
@@ -27,6 +28,7 @@ public class TestCommandLineRunner implements CommandLineRunner {
 
     private final Logger logger = LoggerFactory.getLogger(TestCommandLineRunner.class);
 
+    private final MailService mailService;
     private final UserDetailsManagerImpl userService;
     private final UserDataService userDataService;
     private final PasswordEncoder passwordEncoder;
@@ -34,8 +36,9 @@ public class TestCommandLineRunner implements CommandLineRunner {
     private final TaskExecutor taskExecutor;
 
     @Autowired
-    TestCommandLineRunner(StocksService stocksService,UserDataService userDataService,UserDetailsManagerImpl userService, PasswordEncoder passwordEncoder, TaskExecutor taskExecutor) {
+    TestCommandLineRunner(MailService mailService, StocksService stocksService, UserDataService userDataService, UserDetailsManagerImpl userService, PasswordEncoder passwordEncoder, TaskExecutor taskExecutor) {
         this.userService = userService;
+        this.mailService = mailService;
         this.passwordEncoder = passwordEncoder;
         this.userDataService = userDataService;
         this.stocksService = stocksService;
@@ -46,33 +49,33 @@ public class TestCommandLineRunner implements CommandLineRunner {
     public void run(String... args) throws AlreadyExistsException {
 
 //         add TestUsers
-        UserImpl user2 = new UserImpl("admin@gmail.com", passwordEncoder.encode("password"),new AuthorityImpl(Role.ROLE_ADMIN));
-        UserImpl user3 = new UserImpl("user@gmail.com", passwordEncoder.encode("password"),new AuthorityImpl(Role.ROLE_USER));
+        UserImpl user2 = new UserImpl("admin@gmail.com", passwordEncoder.encode("password"), new AuthorityImpl(Role.ROLE_ADMIN));
+        UserImpl user3 = new UserImpl("user@gmail.com", passwordEncoder.encode("password"), new AuthorityImpl(Role.ROLE_USER));
 
-        if(userService.userExists(user2.toUserDetails().getUsername())){
-            logger.warn(user2.toUserDetails().getUsername()+ " already exists and cant be inserted");
-        }else{
+        if (userService.userExists(user2.toUserDetails().getUsername())) {
+            logger.warn(user2.toUserDetails().getUsername() + " already exists and cant be inserted");
+        } else {
             userService.createUser(user2.toUserDetails());
         }
 
-        if(userService.userExists(user3.toUserDetails().getUsername())){
-            logger.warn(user2.toUserDetails().getUsername()+ " already exists and cant be inserted");
-        }else{
+        if (userService.userExists(user3.toUserDetails().getUsername())) {
+            logger.warn(user2.toUserDetails().getUsername() + " already exists and cant be inserted");
+        } else {
             userService.createUser(user3.toUserDetails());
         }
 
 
         // only add testpositions if they dont exist
-        if(userDataService.getUserData(user2.getUsername()) == null){
-            try{
+        if (userDataService.getUserData(user2.getUsername()) == null) {
+            try {
                 userDataService.createUserData(user2.toUserDetails());
-            }catch(AlreadyExistsException e){
-                logger.warn("UserData already existed for user: "+ user2.toUserDetails().getUsername());
+            } catch (AlreadyExistsException e) {
+                logger.warn("UserData already existed for user: " + user2.toUserDetails().getUsername());
             }
-            try{
+            try {
                 userDataService.createUserData(user3.toUserDetails());
-            }catch(AlreadyExistsException e){
-                logger.warn("UserData already existed for user: "+ user3.toUserDetails().getUsername());
+            } catch (AlreadyExistsException e) {
+                logger.warn("UserData already existed for user: " + user3.toUserDetails().getUsername());
             }
         }
 
@@ -86,7 +89,10 @@ public class TestCommandLineRunner implements CommandLineRunner {
 
         // add TestPosition
 
-        userDataService.addPosition(new Position("GM",new Date(2015-1900, Calendar.APRIL,28),50),user2.getUsername());
-        userDataService.addPosition(new Position("JNJ",new Date(2016-1900, Calendar.APRIL,28),10),user2.getUsername());
+        userDataService.addPosition(new Position("GM", new Date(2015 - 1900, Calendar.APRIL, 28), 50), user2.getUsername());
+        userDataService.addPosition(new Position("JNJ", new Date(2016 - 1900, Calendar.APRIL, 28), 10), user2.getUsername());
+
+        mailService.sendSimpleMessage("ruil4official@gmai.com", "Test", "Test successful");
     }
+
 }

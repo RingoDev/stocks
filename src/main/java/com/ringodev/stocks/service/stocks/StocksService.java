@@ -15,7 +15,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
@@ -27,8 +26,7 @@ public class StocksService {
     private final StocksRepository repository;
     Environment env;
 
-    // check if run in docker container
-    //
+
 
     @Autowired
     StocksService(StocksRepository repository,Environment environment) {
@@ -44,7 +42,6 @@ public class StocksService {
     public void insertStocks(String folder) {
 
         logger.info("Inserting Stocks from " + folder);
-logger.info(Arrays.toString(env.getActiveProfiles()));
         if(List.of(env.getActiveProfiles()).contains("prod"))folder = "/home/" + folder;
 
         File f = new File(folder);
@@ -106,6 +103,4 @@ logger.info(Arrays.toString(env.getActiveProfiles()));
         }
         return values;
     }
-
-
 }
