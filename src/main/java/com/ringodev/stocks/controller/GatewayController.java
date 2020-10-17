@@ -33,7 +33,7 @@ public class GatewayController {
 
 
     @Autowired
-    GatewayController(MailService mailService,UserDetailsManagerImpl userService, UserDataService userDataService) {
+    GatewayController(MailService mailService, UserDetailsManagerImpl userService, UserDataService userDataService) {
         this.userDataService = userDataService;
         this.userService = userService;
         this.mailService = mailService;
@@ -57,6 +57,7 @@ public class GatewayController {
         }
         logger.info("ADDED USER" + user.toString());
         mailService.sendVerificationMessage(user.getUsername());
+        logger.info("Sent Verification Mail to " + user.getUsername());
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
@@ -79,7 +80,7 @@ public class GatewayController {
 
             if (!StringUtils.isEmpty(mail)) {
 //                userService.verifyMail(mail);
-                logger.info("verified Email "+mail);
+                logger.info("verified Email " + mail);
             }
 
         } catch (ExpiredJwtException exception) {
