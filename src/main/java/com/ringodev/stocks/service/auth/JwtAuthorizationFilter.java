@@ -35,6 +35,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws IOException, ServletException {
+        log.info("Doing JWT authorization Filter");
         UsernamePasswordAuthenticationToken authentication = getAuthentication(request);
         if (authentication == null) {
             // change header

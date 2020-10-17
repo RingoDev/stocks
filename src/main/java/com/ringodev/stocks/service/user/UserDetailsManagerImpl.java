@@ -1,5 +1,6 @@
 package com.ringodev.stocks.service.user;
 
+import com.ringodev.stocks.service.mail.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,12 +15,14 @@ import java.util.List;
 @Service
 public class UserDetailsManagerImpl implements UserDetailsManager {
     private final UserRepository userRepository;
+    private final MailService mailService;
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    UserDetailsManagerImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    UserDetailsManagerImpl(MailService mailService ,UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.mailService = mailService;
     }
 
     @Override
@@ -63,5 +66,12 @@ public class UserDetailsManagerImpl implements UserDetailsManager {
         UserImpl user = userRepository.findByUsername(s);
         if (user == null) throw new UsernameNotFoundException("Couldn't find Username");
         else return user.toUserDetails();
+    }
+
+
+    public void verifyMail(String mail){
+
+
+        this.mailService.sendVerificationMessage(mail);
     }
 }

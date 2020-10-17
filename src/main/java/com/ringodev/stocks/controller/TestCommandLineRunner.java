@@ -92,7 +92,7 @@ public class TestCommandLineRunner implements CommandLineRunner {
         userDataService.addPosition(new Position("GM", new Date(2015 - 1900, Calendar.APRIL, 28), 50), user2.getUsername());
         userDataService.addPosition(new Position("JNJ", new Date(2016 - 1900, Calendar.APRIL, 28), 10), user2.getUsername());
 
-        mailService.sendSimpleMessage("ruil4official@gmail.com", "Test", "Test successful");
+//        mailService.sendSimpleMessage("ruil4official@gmail.com", "Test", "Test successful");
     }
 
 }
