@@ -2,6 +2,7 @@ package com.ringodev.stocks.controller;
 
 import com.ringodev.stocks.data.AlreadyExistsException;
 import com.ringodev.stocks.service.auth.security.SecurityConstants;
+import com.ringodev.stocks.service.mail.MailService;
 import com.ringodev.stocks.service.user.UserDetailsManagerImpl;
 import com.ringodev.stocks.service.userdata.UserDataService;
 import io.jsonwebtoken.*;
@@ -28,12 +29,14 @@ public class GatewayController {
     private final Logger logger = LoggerFactory.getLogger(GatewayController.class);
     private final UserDetailsManagerImpl userService;
     private final UserDataService userDataService;
+    private final MailService mailService;
 
 
     @Autowired
-    GatewayController(UserDetailsManagerImpl userService, UserDataService userDataService) {
+    GatewayController(MailService mailService,UserDetailsManagerImpl userService, UserDataService userDataService) {
         this.userDataService = userDataService;
         this.userService = userService;
+        this.mailService = mailService;
     }
 
 
@@ -53,6 +56,7 @@ public class GatewayController {
             }
         }
         logger.info("ADDED USER" + user.toString());
+        mailService.sendVerificationMessage(user.getUsername());
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
