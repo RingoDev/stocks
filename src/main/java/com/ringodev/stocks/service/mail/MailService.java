@@ -60,7 +60,7 @@ public class MailService {
     }
 
     public void sendVerificationMessage(
-            String to) throws MessagingException {
+            String to)  {
 
         byte[] signingKey = SecurityConstants.JWT_SECRET.getBytes();
 
@@ -77,13 +77,16 @@ public class MailService {
 
         MimeMessage message = emailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message,"utf-8");
-        helper.setText("Click the "+
-                "<a href=\"https://ringodev.xyz/api/verify?token="+token+"\">link</a>"+ " to verify:\n",true);
-        helper.setFrom("noreply@ringodev.com");
-        helper.setTo(to);
-        helper.setSubject("Verify your RingoDev account");
+        try {
+            helper.setText("Click the "+
+                    "<a href=\"https://ringodev.xyz/api/verify?token="+token+"\">link</a>"+ " to verify:\n",true);
+            helper.setFrom("noreply@ringodev.com");
+            helper.setTo(to);
+            helper.setSubject("Verify your RingoDev account");
+        } catch (MessagingException e) {
+            e.printStackTrace();
+        }
+
         emailSender.send(message);
     }
-
-
 }
