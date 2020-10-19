@@ -16,7 +16,6 @@ public class UserData {
     private String lastname;
     @Column(unique = true, nullable = false)
     private String email;
-
     @Id
     String username;
 
@@ -88,7 +87,10 @@ public class UserData {
     @Override
     public String toString() {
         return "UserData{" +
-                "username='" + username + '\'' +
+                "firstname='" + firstname + '\'' +
+                ", lastname='" + lastname + '\'' +
+                ", email='" + email + '\'' +
+                ", username='" + username + '\'' +
                 ", positions=" + positions +
                 '}';
     }

@@ -2,6 +2,7 @@ package com.ringodev.stocks.service.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ringodev.stocks.service.auth.security.SecurityConstants;
+import com.ringodev.stocks.service.user.UserImpl;
 import com.ringodev.stocks.service.userdata.UserDataService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -9,14 +10,13 @@ import io.jsonwebtoken.lang.Assert;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import javax.servlet.FilterChain;
@@ -36,16 +36,12 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private UserDataService userDataService;
+    private final AuthenticationManager authenticationManager;
 
-    @Autowired
-    public UserDataService setUserDataService(UserDataService userDataService) {
-        return userDataService;
-    }
-
-
-    @Autowired
-    public JwtAuthenticationFilter() {
+    public JwtAuthenticationFilter(UserDataService userDataService, AuthenticationManager authenticationManager) {
         setFilterProcessesUrl(SecurityConstants.AUTH_LOGIN_URL);
+        this.userDataService = userDataService;
+        this.authenticationManager = authenticationManager;
     }
 
     @Override
@@ -56,21 +52,27 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         Credentials credentials = this.getCredentials(request);
         assert credentials != null;
-        Assert.notNull(credentials,"Didn't receive JSON Credentials");
+        Assert.notNull(credentials, "Didn't receive JSON Credentials");
+        Assert.notNull(userDataService,"UserDataService wasn't initialized");
 
-        if(credentials.getUsername() == null && credentials.getEmail() != null){
+        if (credentials.getUsername() == null && credentials.getEmail() != null) {
             credentials.setUsername(userDataService.getUsernameFromEmail(credentials.getEmail()));
         }
 
+        logger.info("Attempting Authentication with credentials: " + credentials.toString());
+
+
         UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(credentials.getUsername(), credentials.getPassword());
-        return this.getAuthenticationManager().authenticate(authRequest);
+
+        logger.info("Authenticating authToken");
+        return this.authenticationManager.authenticate(authRequest);
     }
 
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response,
                                             FilterChain filterChain, Authentication authentication) throws IOException {
-        User user = ((User) authentication.getPrincipal());
+        UserImpl user = ((UserImpl) authentication.getPrincipal());
 
         List<String> roles = user.getAuthorities()
                 .stream()
@@ -99,21 +101,30 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     }
 
     private Credentials getCredentials(HttpServletRequest request) {
+
+        logger.info("Attempting to grab credentials");
+
         try {
             /*
              * HttpServletRequest can be read only once
              */
             StringBuilder sb = new StringBuilder();
-            String line;
-
             BufferedReader reader = request.getReader();
-            while ((line = reader.readLine()) != null) {
+            reader.mark(10000);
+            String line = reader.readLine();
+
+            while (line != null) {
                 sb.append(line);
+                line = reader.readLine();
             }
 
+            reader.close();
+            logger.info("Grabbed POST data: " + sb.toString());
             //json transformation
             ObjectMapper mapper = new ObjectMapper();
-            return mapper.readValue(sb.toString(), Credentials.class);
+            Credentials credentials = mapper.readValue(sb.toString(), Credentials.class);
+            logger.info("Created Credentials Object: " + credentials.toString());
+            return credentials;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -156,6 +167,15 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         public void setEmail(String email) {
             this.email = email;
+        }
+
+        @Override
+        public String toString() {
+            return "Credentials{" +
+                    "password='" + password + '\'' +
+                    ", username='" + username + '\'' +
+                    ", email='" + email + '\'' +
+                    '}';
         }
     }
 

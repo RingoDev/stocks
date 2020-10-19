@@ -6,12 +6,11 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import java.util.Objects;
 
 import static javax.persistence.GenerationType.AUTO;
 
 @Entity
-public class AuthorityImpl implements GrantedAuthority {
+public class AuthorityImpl implements GrantedAuthority, Comparable {
 
     @Id
     @GeneratedValue(strategy = AUTO)
@@ -73,8 +72,13 @@ public class AuthorityImpl implements GrantedAuthority {
 
     @Override
     public int hashCode() {
-        return Objects.hash(role);
+        return role.hashCode();
     }
 
 
+    @Override
+    public int compareTo(Object o) {
+        AuthorityImpl authority = (AuthorityImpl) o;
+        return this.getAuthority().compareTo(authority.getAuthority());
+    }
 }

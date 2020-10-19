@@ -4,6 +4,7 @@ import com.ringodev.stocks.service.auth.JwtAuthenticationFilter;
 import com.ringodev.stocks.service.auth.JwtAuthorizationFilter;
 import com.ringodev.stocks.service.auth.JwtBuilderService;
 import com.ringodev.stocks.service.user.UserDetailsManagerImpl;
+import com.ringodev.stocks.service.userdata.UserDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,12 +26,14 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     private final UserDetailsManagerImpl userService;
     private final PasswordEncoder passwordEncoder;
     JwtBuilderService jwtBuilderService;
+    private final UserDataService userDataService;
 
     @Autowired
-    SecurityConfiguration(UserDetailsManagerImpl userService, PasswordEncoder passwordEncoder, JwtBuilderService jwtBuilderService) {
+    SecurityConfiguration(UserDataService userDataService,UserDetailsManagerImpl userService, PasswordEncoder passwordEncoder, JwtBuilderService jwtBuilderService) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.jwtBuilderService = jwtBuilderService;
+        this.userDataService = userDataService;
     }
 
     @Override
@@ -42,7 +45,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers("/api/signup", "/api/verify").permitAll()
                 .anyRequest().authenticated()
                 .and()
-                .addFilter(new JwtAuthenticationFilter())
+                .addFilter(new JwtAuthenticationFilter(userDataService,authenticationManager()))
                 .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtBuilderService))
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);

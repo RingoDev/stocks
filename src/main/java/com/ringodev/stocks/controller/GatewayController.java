@@ -5,6 +5,7 @@ import com.ringodev.stocks.service.auth.security.SecurityConstants;
 import com.ringodev.stocks.service.mail.MailService;
 import com.ringodev.stocks.service.user.AuthorityImpl;
 import com.ringodev.stocks.service.user.UserDetailsManagerImpl;
+import com.ringodev.stocks.service.user.UserImpl;
 import com.ringodev.stocks.service.userdata.UserDataService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.SignatureException;
@@ -13,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,15 +33,14 @@ public class GatewayController {
     private final UserDetailsManagerImpl userService;
     private final UserDataService userDataService;
     private final MailService mailService;
-    private final AuthenticationManager authenticationManager;
+
 
     @Autowired
-    GatewayController(AuthenticationManager authenticationManager, MailService mailService, UserDetailsManagerImpl userService, UserDataService userDataService) {
+    GatewayController(MailService mailService, UserDetailsManagerImpl userService, UserDataService userDataService) {
         this.userDataService = userDataService;
         this.userService = userService;
         this.mailService = mailService;
-        this.authenticationManager = authenticationManager;
-    }
+           }
 
     // tries to signup a new user
     @PostMapping("/signup")
@@ -108,7 +107,7 @@ public class GatewayController {
 
     @PostMapping("/createGuest")
     public ResponseEntity<Object> createGuestAccount(HttpServletRequest request) {
-        User guest = userService.createGuest();
+        UserImpl guest = userService.createGuest();
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

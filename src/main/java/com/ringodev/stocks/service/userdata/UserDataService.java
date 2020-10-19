@@ -32,6 +32,10 @@ public class UserDataService {
         userDataRepository.flush();
     }
 
+    public List<UserData> getAllUserData(){
+        return userDataRepository.findAll();
+    }
+
     UserData getUserData(Principal principal) {
         return userDataRepository.findByUsername(principal.getName());
     }
@@ -195,8 +199,9 @@ public class UserDataService {
     }
 
     public String getUsernameFromEmail(String email) {
+        logger.info("Getting Username from UserData repository for mail: "+email);
         UserData data = userDataRepository.findByEmail(email);
-        Assert.notNull(data,"Coulddn't find UserData of email: "+ email);
+        Assert.notNull(data,"Couldn't find UserData of email: "+ email);
         return data.getUsername();
     }
 }

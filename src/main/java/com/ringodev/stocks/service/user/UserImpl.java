@@ -145,13 +145,7 @@ public class UserImpl implements UserDetails {
      */
     private static SortedSet<AuthorityImpl> convertAndSortAuthorities(Collection<? extends GrantedAuthority> authorities) {
         Assert.notNull(authorities, "Cannot pass a null GrantedAuthority collection");
-        SortedSet<AuthorityImpl> sortedAuthorities = new TreeSet<>((g1, g2) -> {
-            if (g2.getAuthority() == null) {
-                return -1;
-            } else {
-                return g1.getAuthority() == null ? 1 : g1.getAuthority().compareTo(g2.getAuthority());
-            }
-        });
+        SortedSet<AuthorityImpl> sortedAuthorities = new TreeSet<>();
 
         for (GrantedAuthority grantedAuthority : authorities) {
             Assert.notNull(grantedAuthority, "GrantedAuthority list cannot contain any null elements");

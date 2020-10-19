@@ -67,7 +67,7 @@ public class TestCommandLineRunner implements CommandLineRunner {
 
         for (List<String> list : testUserList) {
 
-            UserDetails user = new UserImpl(list.get(0),list.get(1),List.of(new AuthorityImpl(list.get(2))));
+            UserDetails user = new UserImpl(list.get(0),passwordEncoder.encode(list.get(1)),List.of(new AuthorityImpl(list.get(2))));
 
             logger.info("Adding User: "+ user.getUsername());
             if (userService.userExists(user.getUsername())) {
@@ -94,6 +94,8 @@ public class TestCommandLineRunner implements CommandLineRunner {
 
             logger.info("added User: " + userDataService.getUserData(user.getUsername()).toString());
         }
+
+        logger.info("TestUserData: "+userDataService.getAllUserData());
 
         // insert Stockdata in new Thread
         taskExecutor.execute(() -> stocksService.insertStocks("data/stock_data_test/"));

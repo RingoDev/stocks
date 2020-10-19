@@ -7,7 +7,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,9 +43,9 @@ public class UserDetailsManagerImpl implements UserDetailsManager {
      *
      * @return the created User object
      */
-    public User createGuest() {
+    public UserImpl createGuest() {
         // todo
-        return new User("", "", new ArrayList<>());
+        return new UserImpl("", "", new ArrayList<>());
     }
 
     /**
