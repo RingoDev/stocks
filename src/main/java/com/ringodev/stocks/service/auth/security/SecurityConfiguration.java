@@ -2,9 +2,11 @@ package com.ringodev.stocks.service.auth.security;
 
 import com.ringodev.stocks.service.auth.JwtAuthenticationFilter;
 import com.ringodev.stocks.service.auth.JwtAuthorizationFilter;
+import com.ringodev.stocks.service.auth.JwtBuilderService;
 import com.ringodev.stocks.service.user.UserDetailsManagerImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -20,25 +22,28 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableGlobalMethodSecurity(securedEnabled = true)
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
-    final UserDetailsManagerImpl userService;
-    final PasswordEncoder passwordEncoder;
+    private final UserDetailsManagerImpl userService;
+    private final PasswordEncoder passwordEncoder;
+    JwtBuilderService jwtBuilderService;
 
     @Autowired
-    SecurityConfiguration(UserDetailsManagerImpl userService, PasswordEncoder passwordEncoder){
+    SecurityConfiguration(UserDetailsManagerImpl userService, PasswordEncoder passwordEncoder, JwtBuilderService jwtBuilderService) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
+        this.jwtBuilderService = jwtBuilderService;
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+
         http.cors().and()
                 .csrf().disable()
                 .authorizeRequests()
-                .antMatchers("/api/signup","/api/verify").permitAll()
+                .antMatchers("/api/signup", "/api/verify").permitAll()
                 .anyRequest().authenticated()
                 .and()
-                .addFilter(new JwtAuthenticationFilter(authenticationManager()))
-                .addFilter(new JwtAuthorizationFilter(authenticationManager()))
+                .addFilter(new JwtAuthenticationFilter())
+                .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtBuilderService))
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
     }
@@ -48,13 +53,16 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         auth.userDetailsService(userService).passwordEncoder(this.passwordEncoder);
     }
 
-
+    @Override
+    @Bean
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return authenticationManager();
+    }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", new CorsConfiguration().applyPermitDefaultValues());
-
         return source;
     }
 }

@@ -2,10 +2,11 @@ package com.ringodev.stocks.service.userdata;
 
 import com.ringodev.stocks.data.*;
 import com.ringodev.stocks.service.stocks.StocksRepository;
+import io.jsonwebtoken.lang.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
@@ -26,6 +27,11 @@ public class UserDataService {
         this.stocksRepository = stocksRepository;
     }
 
+    public void clearALL() {
+        userDataRepository.deleteAll();
+        userDataRepository.flush();
+    }
+
     UserData getUserData(Principal principal) {
         return userDataRepository.findByUsername(principal.getName());
     }
@@ -36,45 +42,45 @@ public class UserDataService {
 
     public void addPosition(Position position, String username) {
         UserData data = userDataRepository.findByUsername(username);
-        if (data == null) {
-            data = new UserData();
-        }
+        Assert.notNull(data, "UserData cannot be null");
+
 
         // check if stock exists in DB
 
-        if(stocksRepository.findByName(position.getStockRef()) == null){
-            logger.warn("Positions for Stock: "+position.getStockRef()+" cant be added because the stock doesn't exist.");
+        if (stocksRepository.findByName(position.getStockRef()) == null) {
+            logger.warn("Positions for Stock: " + position.getStockRef() + " cant be added because the stock doesn't exist.");
             return;
         }
         data.addPosition(position);
         userDataRepository.save(data);
-        logger.info("added Userdata: "+userDataRepository.findByUsername(username).toString());
+        logger.info("added Userdata: " + userDataRepository.findByUsername(username).toString());
     }
 
     /**
      * removes a Position from the specific User's Userdata
-     * @param id the id of the position
+     *
+     * @param id       the id of the position
      * @param username the name of the user
      */
-    public void removePosition(long id,String username){
+    public void removePosition(long id, String username) {
         UserData data = userDataRepository.findByUsername(username);
-        logger.info("removing Position with ID: "+ id);
-        if(!data.removePositionById(id))throw new EntityNotFoundException();
+        logger.info("removing Position with ID: " + id);
+        if (!data.removePositionById(id)) throw new EntityNotFoundException();
         userDataRepository.flush();
     }
 
     /**
      * is called when a new user signs up and creates the userDataObject for this user
      *
-     * @param user the user to create the Data object for
+     * @param userDetails the user to create the Data object for
      */
-    public void createUserData(User user) throws AlreadyExistsException {
-        UserData data = userDataRepository.findByUsername(user.getUsername());
+    public void createUserData(UserDetails userDetails, String email) throws AlreadyExistsException {
+        UserData data = userDataRepository.findByUsername(userDetails.getUsername());
         if (data != null) throw new AlreadyExistsException("UserData Object existed already");
-        data = new UserData();
-        data.setUsername(user.getUsername());
+        data = new UserData(userDetails.getUsername(),email);
+        data.setUsername(userDetails.getUsername());
         data.setPositions(new ArrayList<>());
-        userDataRepository.save(data);
+        userDataRepository.saveAndFlush(data);
     }
 
     public double calculateBuyValue(Position position, Stock stock) throws FileNotFoundException {
@@ -159,7 +165,7 @@ public class UserDataService {
             for (Date date : dates) {
                 DataPoint dp = getClosestDataPoint(date, stock.getHistory());
                 if (dp == null) throw new RuntimeException("Couldn't get a DataPoint that closest matches the date");
-                hist.addDataPoint(dp,position.getQuantity());
+                hist.addDataPoint(dp, position.getQuantity());
             }
 
             position.setBuyValue(calculateBuyValue(position, stock));
@@ -188,4 +194,9 @@ public class UserDataService {
         return list;
     }
 
+    public String getUsernameFromEmail(String email) {
+        UserData data = userDataRepository.findByEmail(email);
+        Assert.notNull(data,"Coulddn't find UserData of email: "+ email);
+        return data.getUsername();
+    }
 }

@@ -1,7 +1,6 @@
 package com.ringodev.stocks.service.userdata;
 
 import com.ringodev.stocks.data.Position;
-import com.ringodev.stocks.data.UserData;
 import com.ringodev.stocks.data.UserStockData;
 import com.ringodev.stocks.service.stocks.StocksService;
 import org.slf4j.Logger;

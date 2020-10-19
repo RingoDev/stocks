@@ -31,8 +31,8 @@ public class MailService {
     @Bean
     private JavaMailSender getJavaMailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
-        mailSender.setHost("smtp.elasticemail.com");
-        mailSender.setPort(2525);
+        mailSender.setHost("smtp.world4you.com");
+        mailSender.setPort(587);
 
         mailSender.setUsername(env.containsProperty("MAIL_ADDRESS") ? env.getProperty("MAIL_ADDRESS") : "");
         mailSender.setPassword(env.containsProperty("MAIL_PASSWORD") ? env.getProperty("MAIL_PASSWORD") : "");

@@ -1,4 +1,6 @@
-package com.ringodev.stocks.data;
+package com.ringodev.stocks.service.userdata;
+
+import com.ringodev.stocks.data.Position;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -8,11 +10,50 @@ import java.util.List;
 public class UserData {
 
 
+    @Column()
+    private String firstname;
+    @Column()
+    private String lastname;
+    @Column(unique = true, nullable = false)
+    private String email;
+
     @Id
     String username;
 
+    public UserData() {
+    }
+
+    UserData(String username,String email){
+        this.username = username;
+        this.email = email;
+    }
+
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     List<Position> positions;
+
+    public String getFirstname() {
+        return firstname;
+    }
+
+    public void setFirstname(String firstname) {
+        this.firstname = firstname;
+    }
+
+    public String getLastname() {
+        return lastname;
+    }
+
+    public void setLastname(String lastname) {
+        this.lastname = lastname;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
     public String getUsername() {
         return username;

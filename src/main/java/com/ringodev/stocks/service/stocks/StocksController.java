@@ -34,7 +34,7 @@ public class StocksController {
     // tries to insert a csv file
     @PostMapping("/insert/nyse")
     public ResponseEntity<Object> insertCSV(HttpServletRequest request) {
-        if (!request.isUserInRole("ROLE_ADMIN")) {
+        if (!request.isUserInRole("ADMIN")) {
             System.out.println("Access to insert was denied");
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }

@@ -5,7 +5,6 @@ import com.ringodev.stocks.data.Position;
 import com.ringodev.stocks.service.mail.MailService;
 import com.ringodev.stocks.service.stocks.StocksService;
 import com.ringodev.stocks.service.user.AuthorityImpl;
-import com.ringodev.stocks.service.user.Role;
 import com.ringodev.stocks.service.user.UserDetailsManagerImpl;
 import com.ringodev.stocks.service.user.UserImpl;
 import com.ringodev.stocks.service.userdata.UserDataService;
@@ -14,11 +13,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Used to insert some custom users for testing
@@ -46,51 +47,57 @@ public class TestCommandLineRunner implements CommandLineRunner {
     }
 
     @Override
-    public void run(String... args) throws AlreadyExistsException {
+    public void run(String... args) {
 
-//         add TestUsers
-        UserImpl user2 = new UserImpl("admin@gmail.com", passwordEncoder.encode("password"), new AuthorityImpl(Role.ROLE_ADMIN));
-        UserImpl user3 = new UserImpl("user@gmail.com", passwordEncoder.encode("password"), new AuthorityImpl(Role.ROLE_USER));
+        // clear User and UserData Repositories
 
-        if (userService.userExists(user2.toUserDetails().getUsername())) {
-            logger.warn(user2.toUserDetails().getUsername() + " already exists and cant be inserted");
-        } else {
-            userService.createUser(user2.toUserDetails());
-        }
+        logger.info("Running TestCommandLineRunner");
 
-        if (userService.userExists(user3.toUserDetails().getUsername())) {
-            logger.warn(user2.toUserDetails().getUsername() + " already exists and cant be inserted");
-        } else {
-            userService.createUser(user3.toUserDetails());
-        }
+        logger.info("Deleting all Users and Userdata");
+        userDataService.clearALL();
+        userService.clearALL();
+
+        // add TestUsers
 
 
-        // only add testpositions if they dont exist
-        if (userDataService.getUserData(user2.getUsername()) == null) {
-            try {
-                userDataService.createUserData(user2.toUserDetails());
-            } catch (AlreadyExistsException e) {
-                logger.warn("UserData already existed for user: " + user2.toUserDetails().getUsername());
+
+        List<List<String>> testUserList = List.of(List.of("admin","password","ADMIN","admin.ringodev@protonmail.com"),
+                List.of("user","password","USER","user.ringodev@protonmail.com")
+        );
+
+        for (List<String> list : testUserList) {
+
+            UserDetails user = new UserImpl(list.get(0),list.get(1),List.of(new AuthorityImpl(list.get(2))));
+
+            logger.info("Adding User: "+ user.getUsername());
+            if (userService.userExists(user.getUsername())) {
+                logger.warn(user.getUsername() + " already exists and cant be inserted");
+            } else {
+                userService.createUser(user);
             }
-            try {
-                userDataService.createUserData(user3.toUserDetails());
-            } catch (AlreadyExistsException e) {
-                logger.warn("UserData already existed for user: " + user3.toUserDetails().getUsername());
+
+
+            // only add TestPositions if they dont exist
+            if (userDataService.getUserData(user.getUsername()) == null) {
+                try {
+                    logger.info("Adding UserData for User: "+ user.getUsername());
+                    userDataService.createUserData(user,list.get(3));
+                } catch (AlreadyExistsException e) {
+                    logger.warn("UserData already existed for user: " + user.getUsername());
+                }
             }
-        }
 
+            // add TestPosition
 
-        for (UserImpl user : userService.getAll()) {
-            logger.info("added User: " + userDataService.getUserData(user.toUserDetails().getUsername()).toString());
+            userDataService.addPosition(new Position("GM", new Date(2015 - 1900, Calendar.APRIL, 28), 50), user.getUsername());
+            userDataService.addPosition(new Position("JNJ", new Date(2016 - 1900, Calendar.APRIL, 28), 10), user.getUsername());
+
+            logger.info("added User: " + userDataService.getUserData(user.getUsername()).toString());
         }
 
         // insert Stockdata in new Thread
         taskExecutor.execute(() -> stocksService.insertStocks("data/stock_data_test/"));
 
-        // add TestPosition
-
-        userDataService.addPosition(new Position("GM", new Date(2015 - 1900, Calendar.APRIL, 28), 50), user2.getUsername());
-        userDataService.addPosition(new Position("JNJ", new Date(2016 - 1900, Calendar.APRIL, 28), 10), user2.getUsername());
 
 //        mailService.sendSimpleMessage("ruil4official@gmail.com", "Test", "Test successful");
     }

@@ -3,6 +3,7 @@ package com.ringodev.stocks.controller;
 import com.ringodev.stocks.data.AlreadyExistsException;
 import com.ringodev.stocks.service.auth.security.SecurityConstants;
 import com.ringodev.stocks.service.mail.MailService;
+import com.ringodev.stocks.service.user.AuthorityImpl;
 import com.ringodev.stocks.service.user.UserDetailsManagerImpl;
 import com.ringodev.stocks.service.userdata.UserDataService;
 import io.jsonwebtoken.*;
@@ -12,14 +13,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
+import java.util.List;
 
 
 @RestController
@@ -30,34 +33,35 @@ public class GatewayController {
     private final UserDetailsManagerImpl userService;
     private final UserDataService userDataService;
     private final MailService mailService;
-
+    private final AuthenticationManager authenticationManager;
 
     @Autowired
-    GatewayController(MailService mailService, UserDetailsManagerImpl userService, UserDataService userDataService) {
+    GatewayController(AuthenticationManager authenticationManager, MailService mailService, UserDetailsManagerImpl userService, UserDataService userDataService) {
         this.userDataService = userDataService;
         this.userService = userService;
         this.mailService = mailService;
+        this.authenticationManager = authenticationManager;
     }
-
 
     // tries to signup a new user
     @PostMapping("/signup")
-    public ResponseEntity<Object> signup(HttpServletRequest request) {
-        User user = new User(request.getParameter("username"), request.getParameter("password"), new ArrayList<>());
+    public ResponseEntity<Object> signup(@RequestBody SignUpData data) {
+        User user = new User(data.getUsername(), data.getPassword(), List.of(new AuthorityImpl("USER")));
+
         if (userService.userExists(user.getUsername())) {
             logger.warn(user.getUsername() + " already exists and cant be inserted");
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } else {
             userService.createUser(user);
             try {
-                userDataService.createUserData(user);
+                userDataService.createUserData(user, data.email);
             } catch (AlreadyExistsException e) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
         }
         logger.info("ADDED USER" + user.toString());
-        mailService.sendVerificationMessage(user.getUsername());
-        logger.info("Sent Verification Mail to " + user.getUsername());
+        mailService.sendVerificationMessage(data.getEmail());
+        logger.info("Sent Verification Mail to " + data.getEmail());
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
@@ -106,6 +110,36 @@ public class GatewayController {
     public ResponseEntity<Object> createGuestAccount(HttpServletRequest request) {
         User guest = userService.createGuest();
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    static class SignUpData {
+        String username;
+        String password;
+        String email;
+
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
     }
 
 

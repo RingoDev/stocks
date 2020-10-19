@@ -1,64 +1,93 @@
 package com.ringodev.stocks.service.user;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.hibernate.annotations.SortNatural;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.util.Assert;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import javax.persistence.*;
+import java.util.*;
 
 import static javax.persistence.GenerationType.AUTO;
 
 @Entity
-public class UserImpl {
+public class UserImpl implements UserDetails {
+
+    private static final Log logger = LogFactory.getLog(UserImpl.class);
 
     // id for internal calling of other Services
     @Id
     @GeneratedValue(strategy = AUTO)
-    Long id;
+    private Long id;
     @Column(unique = true, nullable = false)
-    String username;
+    private String username;
     @Column(nullable = false)
-    String password;
-    @Column()
-    String firstname;
-    @Column()
-    String lastname;
-    @Column()
-    String email;
+    private String password;
+    @OneToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
+    @SortNatural
+    private Set<AuthorityImpl> authoritiesImpl;
     @Column(nullable = false)
-    GrantedAuthority auth;
+    private Boolean enabled = false;
     @Column(nullable = false)
-    Boolean enabled = false;
+    private boolean accountNonExpired;
     @Column(nullable = false)
-    Date dateCreate = new Date();
+    private boolean accountNonLocked;
+    @Column(nullable = false)
+    private boolean credentialsNonExpired;
+
 
     public UserImpl() {
-    }
-
-    public UserImpl(String username, String password) {
-        this(username, password, new AuthorityImpl(Role.ROLE_USER), true, new Date());
 
     }
 
-    public UserImpl(User user){
-        this(user.getUsername(), user.getPassword(), user.getAuthorities().stream().findFirst().orElse(new AuthorityImpl(Role.ROLE_USER)), true, new Date());
-    }
-    public UserImpl(String username, String password,GrantedAuthority auth) {
-        this(username, password, auth, true, new Date());
+    public UserImpl(String username, String password, Collection<? extends GrantedAuthority> authorities) {
+        this(username, password, authorities, true, true, true, true);
     }
 
-    public UserImpl(String username, String password, GrantedAuthority auth, boolean enabled, Date dateCreate) {
+    public UserImpl(String username, String password, Collection<? extends GrantedAuthority> grantedAuthorities, boolean enabled, boolean accountNonExpired, boolean accountNonLocked, boolean credentialsNonExpired) {
         this.username = username;
         this.password = password;
-        this.auth = auth;
+        this.authoritiesImpl = convertAndSortAuthorities(grantedAuthorities);
         this.enabled = enabled;
-        this.dateCreate = dateCreate;
+        this.accountNonExpired = accountNonExpired;
+        this.accountNonLocked = accountNonLocked;
+        this.credentialsNonExpired = credentialsNonExpired;
     }
+
+    public static UserImpl from(UserDetails userDetails) {
+        return new UserImpl(userDetails.getUsername(), userDetails.getPassword(), userDetails.getAuthorities(), userDetails.isEnabled(), userDetails.isAccountNonExpired(), userDetails.isAccountNonLocked(), userDetails.isCredentialsNonExpired());
+    }
+
+    // UserDetails Methods
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return this.accountNonExpired;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return this.accountNonLocked;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return credentialsNonExpired;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return this.enabled;
+    }
+
+    @Override
+    public List<GrantedAuthority> getAuthorities() {
+        return new ArrayList<>(this.authoritiesImpl);
+    }
+
+    // Getter, Setter
 
     public Long getId() {
         return id;
@@ -84,38 +113,6 @@ public class UserImpl {
         this.password = password;
     }
 
-    public String getFirstname() {
-        return firstname;
-    }
-
-    public void setFirstname(String firstname) {
-        this.firstname = firstname;
-    }
-
-    public String getLastname() {
-        return lastname;
-    }
-
-    public void setLastname(String lastname) {
-        this.lastname = lastname;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public GrantedAuthority getAuth() {
-        return auth;
-    }
-
-    public void setAuth(GrantedAuthority auth) {
-        this.auth = auth;
-    }
-
     public Boolean getEnabled() {
         return enabled;
     }
@@ -124,38 +121,53 @@ public class UserImpl {
         this.enabled = enabled;
     }
 
-    public Date getDateCreate() {
-        return dateCreate;
+    public Set<AuthorityImpl> getAuthoritiesImpl() {
+        return authoritiesImpl;
     }
 
-    public void setDateCreate(Date dateCreate) {
-        this.dateCreate = dateCreate;
+    public void setAuthoritiesImpl(Set<AuthorityImpl> authoritiesImpl) {
+        this.authoritiesImpl = authoritiesImpl;
     }
 
-
-
-    @Override
-    public String toString() {
-        return "UserImpl{" +
-                "id=" + id +
-                ", username='" + username + '\'' +
-                ", password='" + password + '\'' +
-                ", firstname='" + firstname + '\'' +
-                ", lastname='" + lastname + '\'' +
-                ", email='" + email + '\'' +
-                ", auth=" + auth +
-                ", enabled=" + enabled +
-                ", dateCreate=" + dateCreate +
-                '}';
+    public void setAccountNonLocked(boolean accountNonLocked) {
+        this.accountNonLocked = accountNonLocked;
     }
 
-    private List<GrantedAuthority> getAuthorities(){
-        List<GrantedAuthority> list = new ArrayList<>();
-        list.add(this.auth);
-        return list;
+    public void setCredentialsNonExpired(boolean credentialsNonExpired) {
+        this.credentialsNonExpired = credentialsNonExpired;
     }
 
-    public User toUserDetails() {
-        return new User(this.username, this.password, this.getAuthorities());
+    /**
+     * Converts every {@link GrantedAuthority} to {@link AuthorityImpl} and sorts them
+     *
+     * @param authorities a {@link Collection} of Granted Authorities or its SubClasses
+     * @return a SortedSet of the granted Authorities
+     */
+    private static SortedSet<AuthorityImpl> convertAndSortAuthorities(Collection<? extends GrantedAuthority> authorities) {
+        Assert.notNull(authorities, "Cannot pass a null GrantedAuthority collection");
+        SortedSet<AuthorityImpl> sortedAuthorities = new TreeSet<>((g1, g2) -> {
+            if (g2.getAuthority() == null) {
+                return -1;
+            } else {
+                return g1.getAuthority() == null ? 1 : g1.getAuthority().compareTo(g2.getAuthority());
+            }
+        });
+
+        for (GrantedAuthority grantedAuthority : authorities) {
+            Assert.notNull(grantedAuthority, "GrantedAuthority list cannot contain any null elements");
+            sortedAuthorities.add(AuthorityImpl.of(grantedAuthority));
+        }
+        return sortedAuthorities;
+
+    }
+
+    public void setFromUserDetails(UserDetails userDetails) {
+        this.setPassword(userDetails.getPassword());
+        this.setAuthoritiesImpl(convertAndSortAuthorities(userDetails.getAuthorities()));
+        this.setUsername((userDetails.getUsername()));
+        this.setEnabled(userDetails.isEnabled());
+        userDetails.isCredentialsNonExpired();
+        userDetails.isAccountNonExpired();
+        userDetails.isAccountNonLocked();
     }
 }
