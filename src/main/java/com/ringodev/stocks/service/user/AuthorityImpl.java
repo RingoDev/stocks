@@ -10,7 +10,7 @@ import javax.persistence.Id;
 import static javax.persistence.GenerationType.AUTO;
 
 @Entity
-public class AuthorityImpl implements GrantedAuthority, Comparable {
+public class AuthorityImpl implements GrantedAuthority, Comparable<AuthorityImpl> {
 
     @Id
     @GeneratedValue(strategy = AUTO)
@@ -24,7 +24,7 @@ public class AuthorityImpl implements GrantedAuthority, Comparable {
         this.id = id;
     }
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     String role;
 
     public AuthorityImpl(String role) {
@@ -77,8 +77,7 @@ public class AuthorityImpl implements GrantedAuthority, Comparable {
 
 
     @Override
-    public int compareTo(Object o) {
-        AuthorityImpl authority = (AuthorityImpl) o;
-        return this.getAuthority().compareTo(authority.getAuthority());
+    public int compareTo(AuthorityImpl o) {
+        return this.getAuthority().compareTo(o.getAuthority());
     }
 }

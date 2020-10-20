@@ -25,7 +25,7 @@ public class UserImpl implements UserDetails {
     private String username;
     @Column(nullable = false)
     private String password;
-    @ManyToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     @SortNatural
     private Set<AuthorityImpl> authoritiesImpl;
     @Column(nullable = false)
