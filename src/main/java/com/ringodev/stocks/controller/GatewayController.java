@@ -54,6 +54,7 @@ public class GatewayController {
             try {
                 userDataService.createUserData(userImpl, data.email);
             } catch (AlreadyExistsException e) {
+                userService.deleteUser(userImpl.getUsername());
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
         }
