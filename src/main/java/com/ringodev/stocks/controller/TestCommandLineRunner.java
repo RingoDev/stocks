@@ -101,7 +101,7 @@ public class TestCommandLineRunner implements CommandLineRunner {
         taskExecutor.execute(() -> stocksService.insertStocks("data/stock_data_test/"));
 
 
-        mailService.sendSimpleMessage("ruil4official@gmail.com", "Test", "Test successful");
+//        mailService.sendSimpleMessage("ruil4official@gmail.com", "Test", "Test successful");
     }
 
 }
