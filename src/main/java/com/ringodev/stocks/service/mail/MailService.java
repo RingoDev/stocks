@@ -4,11 +4,12 @@ import com.ringodev.stocks.service.auth.security.SecurityConstants;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import java.util.Properties;
 public class MailService {
 
     Environment env;
+    Logger logger = LoggerFactory.getLogger(MailService.class);
 
     @Autowired
     public MailService(Environment environment) {
@@ -29,19 +31,25 @@ public class MailService {
     }
 
     @Bean
-    private JavaMailSender getJavaMailSender() {
+    private JavaMailSenderImpl getJavaMailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
-        mailSender.setHost("smtp.world4you.com");
-        mailSender.setPort(587);
 
-        mailSender.setUsername(env.containsProperty("MAIL_ADDRESS") ? env.getProperty("MAIL_ADDRESS") : "");
-        mailSender.setPassword(env.containsProperty("MAIL_PASSWORD") ? env.getProperty("MAIL_PASSWORD") : "");
+        mailSender.setUsername(env.containsProperty("MAIL_ADDR") ? env.getProperty("MAIL_ADDR") : "");
+        mailSender.setPassword(env.containsProperty("MAIL_PASS") ? env.getProperty("MAIL_PASS") : "");
 
         Properties props = mailSender.getJavaMailProperties();
+
+        props.put("mail.smtp.host", "smtp.world4you.com");
+        props.put("mail.smtp.port", "587");
         props.put("mail.transport.protocol", "smtp");
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
         props.put("mail.debug", "true");
+
+        mailSender.setJavaMailProperties(props);
+
+        logger.info("Mailsender Password: "+ env.getProperty("MAIL_PASS"));
+        logger.info("Mailsender Address: "+ env.getProperty("MAIL_ADDR"));
 
         return mailSender;
     }
@@ -49,7 +57,7 @@ public class MailService {
 
     public void sendSimpleMessage(
             String to, String subject, String text) {
-        JavaMailSender emailSender = getJavaMailSender();
+        JavaMailSenderImpl emailSender = getJavaMailSender();
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom("noreply@ringodev.com");
@@ -73,7 +81,7 @@ public class MailService {
                 .setExpiration(new Date(System.currentTimeMillis() + ( 1000 * 60 *10)))
                 .compact();
 
-        JavaMailSender emailSender = getJavaMailSender();
+        JavaMailSenderImpl emailSender = getJavaMailSender();
 
         MimeMessage message = emailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message,"utf-8");
