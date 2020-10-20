@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,20 +33,22 @@ public class GatewayController {
     private final UserDetailsManagerImpl userService;
     private final UserDataService userDataService;
     private final MailService mailService;
+    private final PasswordEncoder passwordEncoder;
 
 
     @Autowired
-    GatewayController(MailService mailService, UserDetailsManagerImpl userService, UserDataService userDataService) {
+    GatewayController(PasswordEncoder passwordEncoder, MailService mailService, UserDetailsManagerImpl userService, UserDataService userDataService) {
         this.userDataService = userDataService;
         this.userService = userService;
         this.mailService = mailService;
-           }
+        this.passwordEncoder = passwordEncoder;
+    }
 
     // tries to signup a new user
     @PostMapping("/signup")
     public ResponseEntity<Object> signup(@RequestBody SignUpData data) {
-        UserImpl userImpl = new UserImpl(data.getUsername(), data.getPassword(), List.of(new AuthorityImpl("USER")));
-
+        UserImpl userImpl = new UserImpl(data.getUsername(), passwordEncoder.encode(data.getPassword()), List.of(new AuthorityImpl("USER")));
+        logger.info("Signing up new User: " + userImpl.toString());
         if (userService.userExists(userImpl.getUsername())) {
             logger.warn(userImpl.getUsername() + " already exists and cant be inserted");
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
