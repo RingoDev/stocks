@@ -68,7 +68,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         final CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("https://stocks.ringodev.com","https://www.ringodev.xyz","https://ringodev.xyz"));
+        configuration.setAllowedOrigins(Arrays.asList("https://www.ringodev.xyz:8443","https://www.ringodev.xyz"));
         configuration.setAllowedMethods(List.of("GET","PUT"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
