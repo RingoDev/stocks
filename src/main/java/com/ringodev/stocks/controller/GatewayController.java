@@ -14,9 +14,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -42,20 +44,20 @@ public class GatewayController {
     // tries to signup a new user
     @PostMapping("/signup")
     public ResponseEntity<Object> signup(@RequestBody SignUpData data) {
-        User user = new User(data.getUsername(), data.getPassword(), List.of(new AuthorityImpl("USER")));
+        UserImpl userImpl = new UserImpl(data.getUsername(), data.getPassword(), List.of(new AuthorityImpl("USER")));
 
-        if (userService.userExists(user.getUsername())) {
-            logger.warn(user.getUsername() + " already exists and cant be inserted");
+        if (userService.userExists(userImpl.getUsername())) {
+            logger.warn(userImpl.getUsername() + " already exists and cant be inserted");
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } else {
-            userService.createUser(user);
+            userService.createUser(userImpl);
             try {
-                userDataService.createUserData(user, data.email);
+                userDataService.createUserData(userImpl, data.email);
             } catch (AlreadyExistsException e) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
         }
-        logger.info("ADDED USER" + user.toString());
+        logger.info("ADDED USER" + userImpl.toString());
         mailService.sendVerificationMessage(data.getEmail());
         logger.info("Sent Verification Mail to " + data.getEmail());
         return new ResponseEntity<>(HttpStatus.OK);
