@@ -87,7 +87,7 @@ public class MailService {
         MimeMessageHelper helper = new MimeMessageHelper(message,"utf-8");
         try {
             helper.setText("Click the "+
-                    "<a href=\"https://ringodev.xyz/api/verify?token="+token+"\">link</a>"+ " to verify:\n",true);
+                    "<a href=\"https://ringodev.xyz:8443/api/verify?token="+token+"\">link</a>"+ " to verify:\n",true);
             helper.setFrom("noreply@ringodev.com");
             helper.setTo(to);
             helper.setSubject("Verify your RingoDev account");

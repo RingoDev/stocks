@@ -16,11 +16,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.EntityNotFoundException;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
@@ -47,7 +45,7 @@ public class GatewayController {
     // tries to signup a new user
     @PostMapping("/signup")
     public ResponseEntity<Object> signup(@RequestBody SignUpData data) {
-        UserImpl userImpl = new UserImpl(data.getUsername(), passwordEncoder.encode(data.getPassword()), List.of(new AuthorityImpl("USER")));
+        UserImpl userImpl = new UserImpl(data.getUsername(), passwordEncoder.encode(data.getPassword()), List.of(new AuthorityImpl("USER")),false,true,true,true);
         logger.info("Signing up new User: " + userImpl.toString());
         if (userService.userExists(userImpl.getUsername())) {
             logger.warn(userImpl.getUsername() + " already exists and cant be inserted");
@@ -68,7 +66,7 @@ public class GatewayController {
     }
 
     // tries to verify the Users Email
-    @PostMapping("/verify")
+    @GetMapping("/verify")
     public ResponseEntity<Object> verifyMail(HttpServletRequest request) {
         String token = request.getParameter("token");
         // verify token and get the mail address
@@ -85,7 +83,7 @@ public class GatewayController {
                     .getSubject();
 
             if (!StringUtils.isEmpty(mail)) {
-//                userService.verifyMail(mail);
+                userService.verifyMail(userDataService.getUsernameFromEmail(mail));
                 logger.info("verified Email " + mail);
             }
 
@@ -103,6 +101,9 @@ public class GatewayController {
             return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
         } catch (IllegalArgumentException exception) {
             logger.warn("Request to parse empty or null JWT : {} failed : {}", token, exception.getMessage());
+            return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
+        }catch (EntityNotFoundException exception){
+            logger.warn(exception.toString());
             return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
         }
         return new ResponseEntity<>(HttpStatus.OK);

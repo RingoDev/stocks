@@ -14,6 +14,7 @@ import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +29,13 @@ public class UserDetailsManagerImpl implements UserDetailsManager {
     @Autowired
     public void setAuthenticationManager(AuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
+    }
+
+    public void verifyMail(String username){
+        if(userExists(username)){
+            userRepository.findByUsername(username).setEnabled(true);
+        }
+        else throw new EntityNotFoundException("Username didn't belong to a user");
     }
 
 
