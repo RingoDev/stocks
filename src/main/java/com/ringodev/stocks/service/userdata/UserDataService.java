@@ -2,12 +2,12 @@ package com.ringodev.stocks.service.userdata;
 
 import com.ringodev.stocks.data.*;
 import com.ringodev.stocks.service.stocks.StocksRepository;
-import io.jsonwebtoken.lang.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import javax.persistence.EntityNotFoundException;
 import java.io.FileNotFoundException;
@@ -135,28 +135,6 @@ public class UserDataService {
         return new UserStockData(dates, enrichPositions(userData, dates));
 
     }
-
-    // get all Positions as one DataObject
-
-//    private List<CombinedPosition> combinePositions(UserData userData) throws FileNotFoundException {
-//        List<CombinedPosition> list = new ArrayList<>();
-//
-//        // initialize 28 long array with dates excluding saturdays and sundays
-//        List<Date> dates = initDates();
-//        for (Date date : dates) {
-//            CombinedPosition combined = new CombinedPosition(date);
-//            for (Position position : userData.getPositions()) {
-//                Stock stock = stocksRepository.findByName(position.getStockRef());
-//                if (stock == null) throw new FileNotFoundException();
-//                DataPoint dp = getClosestDataPoint(date, stock.getHistory());
-//                //System.out.println(date + " Closest DataPoint:" + dp);
-//                if (dp == null) throw new RuntimeException("Couldn't get a DataPoint that closest matches the date");
-//                combined.addValue(dp.getClose() * position.getQuantity());
-//            }
-//            list.add(combined);
-//        }
-//        return list;
-//    }
 
     public List<Position> enrichPositions(UserData userData, List<Date> dates) throws FileNotFoundException {
         List<Position> list = userData.getPositions();

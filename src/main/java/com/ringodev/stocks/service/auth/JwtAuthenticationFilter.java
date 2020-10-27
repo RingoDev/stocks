@@ -56,7 +56,13 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         Assert.notNull(userDataService,"UserDataService wasn't initialized");
 
         if (credentials.getUsername() == null && credentials.getEmail() != null) {
-            credentials.setUsername(userDataService.getUsernameFromEmail(credentials.getEmail()));
+            try{
+                credentials.setUsername(userDataService.getUsernameFromEmail(credentials.getEmail()));
+            }catch(Exception e ){
+                logger.warn("No Username could be found for email: "+credentials.getEmail() );
+                return null;
+            }
+
         }
 
         logger.info("Attempting Authentication with credentials: " + credentials.toString());

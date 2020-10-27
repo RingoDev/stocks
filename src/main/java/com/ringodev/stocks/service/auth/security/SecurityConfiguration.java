@@ -48,6 +48,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers("/api/signup", "/api/verify").permitAll()
                 .anyRequest().authenticated()
+//                testsetting
+//                .anyRequest().permitAll()
                 .and()
                 .addFilter(new JwtAuthenticationFilter(userDataService,authenticationManager()))
                 .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtBuilderService))

@@ -54,13 +54,24 @@ public class UserDataController {
         return new ResponseEntity<>(stockData, HttpStatus.OK);
     }
 
-    // gets the userdata of the user
+    /**
+     * adds a Position to the Users StockData
+     * @param position
+     * @param principal
+     * @return
+     */
     @PostMapping("/addPosition")
     public ResponseEntity<Object> addPosition(@RequestBody Position position, Principal principal) {
         userDataService.addPosition(position, principal.getName());
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    /**
+     * removes a position from the Users StockData
+     * @param idObject
+     * @param principal
+     * @return
+     */
     @PostMapping("/removePosition")
     public ResponseEntity<Object> removePosition(@RequestBody IdObject idObject, Principal principal){
         try{
