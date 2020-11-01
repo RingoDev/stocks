@@ -40,7 +40,7 @@ public class StocksController {
         }
         logger.info("File inserting access was granted");
         // should start in new thread
-        taskExecutor.execute(() -> stocksService.insertStocks(".data/stock_data_nyse/"));
+        taskExecutor.execute(() -> stocksService.insertStocks("/home/data/stock_data_nyse/"));
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

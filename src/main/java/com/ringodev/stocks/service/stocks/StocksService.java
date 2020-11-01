@@ -27,9 +27,8 @@ public class StocksService {
     Environment env;
 
 
-
     @Autowired
-    StocksService(StocksRepository repository,Environment environment) {
+    StocksService(StocksRepository repository, Environment environment) {
         this.repository = repository;
         this.env = environment;
     }
@@ -42,55 +41,68 @@ public class StocksService {
     public void insertStocks(String folder) {
 
         logger.info("Inserting Stocks from " + folder);
-        if(List.of(env.getActiveProfiles()).contains("prod"))folder = "/home/" + folder;
+        if (List.of(env.getActiveProfiles()).contains("prod")) folder = "/home/" + folder;
 
         File f = new File(folder);
         String[] pathNames = f.list();
-        if(pathNames == null){
-            logger.error("Pathname to data wasn't correct: "+ folder);
+        if (pathNames == null) {
+            logger.error("Pathname to data wasn't correct: " + folder);
             return;
         }
-        for(String pathname : pathNames){
-            String stockSign = pathname.substring(0,pathname.indexOf('.'));
-            try{
-                logger.info("Inserting "+stockSign+" from path: "+folder + pathname);
-                insertStock(stockSign,folder+"/"+pathname);
-            }catch (AlreadyExistsException e){
-                logger.info("Stock "+stockSign+ " already existed in the DB and wasn't inserted");
+        insertStocksFromFolder(folder, pathNames);
+    }
+
+    private void insertStocksFromFolder(String folder, String[] pathNames) {
+        for (String pathname : pathNames) {
+            String stockSign = pathname.substring(0, pathname.indexOf('.'));
+            try {
+                logger.info("Inserting " + stockSign + " from path: " + folder + pathname);
+                insertStock(stockSign, folder + "/" + pathname);
+            } catch (AlreadyExistsException e) {
+                logger.info("Stock " + stockSign + " already existed in the DB and wasn't inserted");
             }
         }
     }
 
 
     public ResponseEntity<Object> insertStock(String stockSign, String path) throws AlreadyExistsException {
-        if (repository.findByName(stockSign) != null)
+
+        if (stockExists(stockSign))
             throw new AlreadyExistsException("stock is inserted in the DB already");
 
         long time = System.currentTimeMillis();
-        Stock test = new Stock();
 
-        boolean firstDone = false;
-        // read in csv file
-        try (
-                Scanner scanner = new Scanner(new File(path))) {
-
-            while (scanner.hasNextLine()) {
-                List<String> l = getStringsFromLine(scanner.nextLine());
-                if (!firstDone && l.get(0).equals("Date")) {
-                    firstDone = true;
-                    test.setName(stockSign);
-                } else {
-                    test.addDataPoint(new DataPoint(l));
-                }
-            }
+        try  {
+            Stock test = new Stock();
+            readStockFromCSV(stockSign, path, test);
+            repository.save(test);
+            if (stockExists(stockSign))
+                logger.info("Successfully inserted " + stockSign + " in " + (System.currentTimeMillis() - time) / 1000 + " seconds");
+            else return new ResponseEntity<>(HttpStatus.CONFLICT);
+            return new ResponseEntity<>(HttpStatus.OK);
         } catch (ParseException | FileNotFoundException e) {
             e.printStackTrace();
             logger.info("Couldn't insert " + stockSign);
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
-        repository.save(test);
-        if (repository.findByName(stockSign) != null) logger.info("Succesfully inserted " + stockSign + " in " + (System.currentTimeMillis() - time)/1000 + " seconds" );
-        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    private boolean stockExists(String stockSign) {
+        return repository.findByName(stockSign) != null;
+    }
+
+    private void readStockFromCSV(String stockSign,String path, Stock test) throws ParseException, FileNotFoundException {
+        boolean firstDone = false;
+        Scanner scanner = new Scanner(new File(path));
+        while (scanner.hasNextLine()) {
+            List<String> l = getStringsFromLine(scanner.nextLine());
+            if (!firstDone && l.get(0).equals("Date")) {
+                firstDone = true;
+                test.setName(stockSign);
+            } else {
+                test.addDataPoint(new DataPoint(l));
+            }
+        }
     }
 
     static List<String> getStringsFromLine(String line) {

@@ -9,14 +9,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Map;
 import java.util.Properties;
 
 @Service
@@ -48,53 +49,48 @@ public class MailService {
 
         mailSender.setJavaMailProperties(props);
 
-        logger.info("Mailsender Password: "+ env.getProperty("MAIL_PASS"));
-        logger.info("Mailsender Address: "+ env.getProperty("MAIL_ADDR"));
-
         return mailSender;
     }
 
-
-    public void sendSimpleMessage(
-            String to, String subject, String text) {
-        JavaMailSenderImpl emailSender = getJavaMailSender();
-
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("noreply@ringodev.com");
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(text);
-        emailSender.send(message);
-    }
-
     public void sendVerificationMessage(
-            String to)  {
+            String email,String username) {
 
-        byte[] signingKey = SecurityConstants.JWT_SECRET.getBytes();
-
-        String token = Jwts.builder()
-                .signWith(Keys.hmacShaKeyFor(signingKey), SignatureAlgorithm.HS512)
-                .setHeaderParam("typ", SecurityConstants.TOKEN_TYPE)
-                .setIssuer(SecurityConstants.TOKEN_ISSUER)
-                .setAudience(SecurityConstants.TOKEN_AUDIENCE)
-                .setSubject(to)
-                .setExpiration(new Date(System.currentTimeMillis() + ( 1000 * 60 *10)))
-                .compact();
+        int expirationTime = 1000 * 60 * 10;
+        String token = createToken(email,username, expirationTime);
 
         JavaMailSenderImpl emailSender = getJavaMailSender();
 
         MimeMessage message = emailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message,"utf-8");
+        MimeMessageHelper helper = new MimeMessageHelper(message, "utf-8");
         try {
-            helper.setText("Click the "+
-                    "<a href=\"https://ringodev.xyz:8443/api/verify?token="+token+"\">link</a>"+ " to verify:\n",true);
+            String host = "https://www.ringodev.xyz:8443";
+
+            if (Arrays.asList(env.getActiveProfiles()).contains("dev")) host = "http://localhost:3000";
+
+            helper.setText("Click the " +
+                    "<a href=\"" + host + "/verify?token=" + token + "\">link</a>" + " to verify:\n", true);
             helper.setFrom("noreply@ringodev.com");
-            helper.setTo(to);
+            helper.setTo(email);
             helper.setSubject("Verify your RingoDev account");
         } catch (MessagingException e) {
             e.printStackTrace();
         }
 
         emailSender.send(message);
+    }
+
+    private String createToken(String email, String username, int expirationTime) {
+
+        byte[] signingKey = SecurityConstants.JWT_SECRET.getBytes();
+
+        return Jwts.builder()
+                .signWith(Keys.hmacShaKeyFor(signingKey), SignatureAlgorithm.HS512)
+                .setHeaderParam("typ", SecurityConstants.TOKEN_TYPE)
+                .setIssuer(SecurityConstants.TOKEN_ISSUER)
+                .setAudience(SecurityConstants.TOKEN_AUDIENCE)
+                .setSubject(username)
+                .setExpiration(new Date(System.currentTimeMillis() + (expirationTime)))
+                .addClaims(Map.of(username,email))
+                .compact();
     }
 }
