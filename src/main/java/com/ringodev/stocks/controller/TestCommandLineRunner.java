@@ -74,10 +74,17 @@ public class TestCommandLineRunner implements CommandLineRunner {
 
             addTestPositions(list, user);
 
+            verifyUser(list, user);
+
             logger.info("added User: " + userDataService.getUserData(user.getUsername()).toString());
         }
 
         logger.info("TestUserData: "+userDataService.getAllUserData());
+    }
+
+    private void verifyUser(List<String> list, UserDetails user) {
+        userService.verifyUser(user.getUsername());
+        userDataService.setVerifiedEmail(user.getUsername(), list.get(3));
     }
 
     private void deleteUsers() {
@@ -90,7 +97,7 @@ public class TestCommandLineRunner implements CommandLineRunner {
         if (userDataService.getUserData(user.getUsername()) == null) {
             try {
                 logger.info("Adding UserData for User: "+ user.getUsername());
-                userDataService.createUserData(user, list.get(3));
+                userDataService.createUserData(user);
             } catch (AlreadyExistsException e) {
                 logger.warn("UserData already existed for user: " + user.getUsername());
             }

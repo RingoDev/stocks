@@ -32,7 +32,7 @@ public class UserDataService {
         userDataRepository.flush();
     }
 
-    public List<UserData> getAllUserData(){
+    public List<UserData> getAllUserData() {
         return userDataRepository.findAll();
     }
 
@@ -73,18 +73,29 @@ public class UserDataService {
         userDataRepository.flush();
     }
 
+    public boolean deleteUserData(String username) {
+        if (!UserDataExistsWithUsername(username)) return false;
+        else userDataRepository.deleteById(username);
+        return true;
+    }
+
     /**
      * is called when a new user signs up and creates the userDataObject for this user
      *
      * @param userDetails the user to create the Data object for
      */
-    public void createUserData(UserDetails userDetails, String email) throws AlreadyExistsException {
-        UserData data = userDataRepository.findByUsername(userDetails.getUsername());
-        if (data != null) throw new AlreadyExistsException("UserData Object existed already");
-        data = new UserData(userDetails.getUsername(),email);
-        data.setUsername(userDetails.getUsername());
-        data.setPositions(new ArrayList<>());
-        userDataRepository.saveAndFlush(data);
+    public void createUserData(UserDetails userDetails) throws AlreadyExistsException {
+        if (UserDataExistsWithUsername(userDetails.getUsername()))
+            throw new UsernameAlreadyExistsException("UserData with username exists already");
+        userDataRepository.saveAndFlush(new UserData(userDetails.getUsername()));
+    }
+
+    public boolean UserDataExistsWithUsername(String username) {
+        return userDataRepository.findByUsername(username) != null;
+    }
+
+    public boolean UserDataExistsWithEmail(String email) {
+        return userDataRepository.findByEmail(email) != null;
     }
 
     public double calculateBuyValue(Position position, Stock stock) throws FileNotFoundException {
@@ -114,41 +125,32 @@ public class UserDataService {
         return closest;
     }
 
-    public UserData enrichUserData(UserData userData) throws FileNotFoundException {
-        List<Position> positions = userData.getPositions();
-
-
-        for (Position position : positions) {
-            Stock stock = stocksRepository.findByName(position.getStockRef());
-            if (stock == null) throw new FileNotFoundException();
-            position.setBuyValue(calculateBuyValue(position, stock));
-            position.setCurrentValue(calculateCurrentValue(position, stock));
-        }
-// not doing this anymore combined positions are alculated on client
-//        userData.setCombinedPositions(combinePositions(userData));
-
-        return userData;
-    }
+//    public UserData enrichUserData(UserData userData) throws FileNotFoundException {
+//        List<Position> positions = userData.getPositions();
+//
+//        for (Position position : positions) {
+//            Stock stock = stocksRepository.findByName(position.getStockRef());
+//            if (stock == null) throw new FileNotFoundException();
+//            position.setBuyValue(calculateBuyValue(position, stock));
+//            position.setCurrentValue(calculateCurrentValue(position, stock));
+//        }
+//        return userData;
+//    }
 
     public UserStockData getUserStockData(UserData userData) throws FileNotFoundException {
-        List<Date> dates = initDates();
-        return new UserStockData(dates, enrichPositions(userData, dates));
+        int amountOfDays = 28;
+        List<Date> dates = initDates(amountOfDays);
+        return new UserStockData(dates, addInformationToPositions(userData.getPositions(), dates));
 
     }
 
-    public List<Position> enrichPositions(UserData userData, List<Date> dates) throws FileNotFoundException {
-        List<Position> list = userData.getPositions();
+    public List<Position> addInformationToPositions(List<Position> list, List<Date> dates) throws FileNotFoundException {
+
         for (Position position : list) {
 
-            Stock stock = stocksRepository.findByName(position.getStockRef());
-            if (stock == null) throw new FileNotFoundException();
+            Stock stock = checkStockExists(position);
 
-            MonthHistory hist = new MonthHistory(position.getStockRef());
-            for (Date date : dates) {
-                DataPoint dp = getClosestDataPoint(date, stock.getHistory());
-                if (dp == null) throw new RuntimeException("Couldn't get a DataPoint that closest matches the date");
-                hist.addDataPoint(dp, position.getQuantity());
-            }
+            MonthHistory hist = addDataPointsToHistory(dates, position, stock);
 
             position.setBuyValue(calculateBuyValue(position, stock));
             position.setCurrentValue(calculateCurrentValue(position, stock));
@@ -157,8 +159,24 @@ public class UserDataService {
         return list;
     }
 
+    private Stock checkStockExists(Position position) throws FileNotFoundException {
+        Stock stock = stocksRepository.findByName(position.getStockRef());
+        if (stock == null) throw new FileNotFoundException();
+        return stock;
+    }
 
-    private static List<Date> initDates() {
+    private MonthHistory addDataPointsToHistory(List<Date> dates, Position position, Stock stock) {
+        MonthHistory hist = new MonthHistory(position.getStockRef());
+        for (Date date : dates) {
+            DataPoint dp = getClosestDataPoint(date, stock.getHistory());
+            if (dp == null) throw new RuntimeException("Couldn't get a DataPoint that closest matches the date");
+            hist.addDataPoint(dp, position.getQuantity());
+        }
+        return hist;
+    }
+
+
+    private static List<Date> initDates(int days) {
         List<Date> list = new ArrayList<>();
         Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
         cal.set(Calendar.HOUR_OF_DAY, 0);
@@ -166,7 +184,7 @@ public class UserDataService {
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
 
-        while (list.size() < 28) {
+        while (list.size() < days) {
 
             if (!(cal.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY || cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY)) {
                 list.add(cal.getTime());
@@ -177,9 +195,16 @@ public class UserDataService {
     }
 
     public String getUsernameFromEmail(String email) {
-        logger.info("Getting Username from UserData repository for mail: "+email);
+        logger.info("Getting Username from UserData repository for mail: " + email);
         UserData data = userDataRepository.findByEmail(email);
-        Assert.notNull(data,"Couldn't find UserData of email: "+ email);
+        Assert.notNull(data, "Couldn't find UserData of email: " + email);
         return data.getUsername();
+    }
+
+    public void setVerifiedEmail(String username, String email) {
+        UserData user = userDataRepository.findByUsername(username);
+        user.setEmail(email);
+        userDataRepository.saveAndFlush(user);
+        logger.info("Added Email " + email + " to UserData of User: " + username);
     }
 }

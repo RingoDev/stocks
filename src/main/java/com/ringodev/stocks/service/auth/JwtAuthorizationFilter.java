@@ -73,7 +73,6 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
                 log.warn("Request to parse empty or null JWT : {} failed : {}", token, exception.getMessage());
             }
         }
-
         return null;
     }
 }

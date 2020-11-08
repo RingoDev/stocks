@@ -56,7 +56,7 @@ public class MailService {
             String email,String username) {
 
         int expirationTime = 1000 * 60 * 10;
-        String token = createToken(email,username, expirationTime);
+        String token = createTokenWithClaims(email,username, expirationTime);
 
         JavaMailSenderImpl emailSender = getJavaMailSender();
 
@@ -79,7 +79,7 @@ public class MailService {
         emailSender.send(message);
     }
 
-    private String createToken(String email, String username, int expirationTime) {
+    private String createTokenWithClaims(String email, String username, int expirationTime) {
 
         byte[] signingKey = SecurityConstants.JWT_SECRET.getBytes();
 
@@ -88,9 +88,8 @@ public class MailService {
                 .setHeaderParam("typ", SecurityConstants.TOKEN_TYPE)
                 .setIssuer(SecurityConstants.TOKEN_ISSUER)
                 .setAudience(SecurityConstants.TOKEN_AUDIENCE)
-                .setSubject(username)
                 .setExpiration(new Date(System.currentTimeMillis() + (expirationTime)))
-                .addClaims(Map.of(username,email))
+                .addClaims(Map.of("username",username,"email",email))
                 .compact();
     }
 }

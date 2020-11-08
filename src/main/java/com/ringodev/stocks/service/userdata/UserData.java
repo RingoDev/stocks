@@ -14,21 +14,22 @@ public class UserData {
     private String firstname;
     @Column()
     private String lastname;
-    @Column(unique = true, nullable = false)
+    @Column(unique = true)
     private String email;
     @Id
     String username;
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    List<Position> positions;
+
 
     public UserData() {
     }
 
-    UserData(String username,String email){
+    UserData(String username){
         this.username = username;
-        this.email = email;
+        this.positions = new ArrayList<>();
     }
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    List<Position> positions;
 
     public String getFirstname() {
         return firstname;

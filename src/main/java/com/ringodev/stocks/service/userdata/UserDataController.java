@@ -33,11 +33,6 @@ public class UserDataController {
     public ResponseEntity<Object> getData(Principal principal) {
         UserData data = userDataService.getUserData(principal);
         if (data == null) return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        try{
-            data = userDataService.enrichUserData(data);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
         return new ResponseEntity<>(data, HttpStatus.OK);
     }
 

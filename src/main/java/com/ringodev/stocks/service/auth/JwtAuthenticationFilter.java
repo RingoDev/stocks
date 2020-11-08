@@ -2,6 +2,7 @@ package com.ringodev.stocks.service.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ringodev.stocks.service.auth.security.SecurityConstants;
+import com.ringodev.stocks.service.user.UserDetailsManagerImpl;
 import com.ringodev.stocks.service.user.UserImpl;
 import com.ringodev.stocks.service.userdata.UserDataService;
 import io.jsonwebtoken.Jwts;
@@ -42,8 +43,10 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     private final UserDataService userDataService;
     private final AuthenticationManager authenticationManager;
     private final Environment env;
+    private final UserDetailsManagerImpl userService;
 
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, UserDataService userDataService, Environment environment) {
+    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, UserDataService userDataService, Environment environment, UserDetailsManagerImpl userService) {
+        this.userService = userService;
         setFilterProcessesUrl(SecurityConstants.AUTH_LOGIN_URL);
         this.userDataService = userDataService;
         this.authenticationManager = authenticationManager;
@@ -59,18 +62,24 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         Credentials credentials = this.getCredentials(request);
         assert credentials != null;
         Assert.notNull(credentials, "Didn't receive JSON Credentials");
-        Assert.notNull(userDataService, "UserDataService wasn't initialized");
 
         if (credentials.getUsername() == null && credentials.getEmail() != null) {
             try {
                 credentials.setUsername(userDataService.getUsernameFromEmail(credentials.getEmail()));
             } catch (Exception e) {
                 logger.warn("No Username could be found for email: " + credentials.getEmail());
+                response.setStatus(401);
                 return null;
             }
         }
 
         logger.info("Attempting Authentication with credentials: " + credentials.toString());
+
+        if(!userService.loadUserByUsername(credentials.getUsername()).isEnabled()) {
+            response.setStatus(403);
+            return null;
+        }
+
         UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(credentials.getUsername(), credentials.getPassword());
 
         logger.info("Authenticating authToken");
@@ -86,7 +95,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         Cookie cookie = createCookie(user, expirationInSeconds);
         response.addCookie(cookie);
 
-        logger.info("Logged " + user.toString() + " in");
+        logger.info("Logged " + user.getUsername() + " in");
     }
 
     @Override

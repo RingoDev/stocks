@@ -1,6 +1,8 @@
 package com.ringodev.stocks.controller;
 
 import com.ringodev.stocks.data.AlreadyExistsException;
+import com.ringodev.stocks.data.EmailAlreadyExistsException;
+import com.ringodev.stocks.data.UsernameAlreadyExistsException;
 import com.ringodev.stocks.service.auth.security.SecurityConstants;
 import com.ringodev.stocks.service.mail.MailService;
 import com.ringodev.stocks.service.user.AuthorityImpl;
@@ -47,36 +49,53 @@ public class GatewayController {
         this.passwordEncoder = passwordEncoder;
     }
 
-    // tries to signup a new user
+    /**
+     * @param data the {@link SignUpData} object containing the Users credentials.
+     * @return StatusCode 405 if the username is already in use, Status Code 409 if the email is already in use
+     */
     @PostMapping("/signup")
-    public ResponseEntity<Object> signup(@RequestBody SignUpData data) {
+    public ResponseEntity<Object> signup(@RequestBody SignUpData data) throws AlreadyExistsException {
         UserImpl userImpl = new UserImpl(data.getUsername(), passwordEncoder.encode(data.getPassword()), List.of(new AuthorityImpl("USER")), false, true, true, true);
         logger.info("Signing up new User: " + userImpl.toString());
-
-        if (!userService.userExists(userImpl.getUsername())) {
-            return createUser(data, userImpl);
-        } else {
-            logger.warn(userImpl.getUsername() + " already exists and cant be inserted");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    private ResponseEntity<Object> createUser(SignUpData data, UserImpl userImpl) {
-        userService.createUser(userImpl);
         try {
-            return createUserData(data, userImpl);
-        } catch (AlreadyExistsException e) {
-            userService.deleteUser(userImpl.getUsername());
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            createUserWithUserData(data.getEmail(), userImpl);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (UsernameAlreadyExistsException e) {
+            logger.warn(userImpl.getUsername() + " already exists and cant be inserted");
+            return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
+        } catch (EmailAlreadyExistsException e) {
+            logger.warn("UserData with email " + data.getEmail() + " already exists and cant be inserted");
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
     }
 
-    private ResponseEntity<Object> createUserData(SignUpData data, UserImpl userImpl) throws AlreadyExistsException {
-        userDataService.createUserData(userImpl, data.email);
+    private void createUserWithUserData(String email, UserImpl userImpl) throws AlreadyExistsException {
+        if (userService.userExists(userImpl.getUsername())) {
+            throw new UsernameAlreadyExistsException("User " + userImpl.getUsername() + " already exists and can't be inserted");
+        }
+
+        userService.createUser(userImpl);
+        if (userDataService.UserDataExistsWithUsername(userImpl.getUsername())) {
+            userDataService.deleteUserData(userImpl.getUsername());
+        }
+        try {
+            createUserDataSendVerification(email, userImpl);
+        } catch (EmailAlreadyExistsException e) {
+            userService.deleteUser(userImpl.getUsername());
+            throw new EmailAlreadyExistsException(e.getMessage());
+        }
+    }
+
+
+    private void createUserDataSendVerification(String email, UserImpl userImpl) throws AlreadyExistsException {
+
+        if (userDataService.UserDataExistsWithEmail(email)) {
+            throw new EmailAlreadyExistsException("User with Email exists already");
+        }
+        userDataService.createUserData(userImpl);
         logger.info("ADDED USER" + userImpl.toString());
-        mailService.sendVerificationMessage(data.getEmail(), data.getUsername());
-        logger.info("Sent Verification Mail to " + data.getEmail());
-        return new ResponseEntity<>(HttpStatus.OK);
+        mailService.sendVerificationMessage(email, userImpl.getUsername());
+        logger.info("Sent Verification Mail to " + email);
     }
 
     static class TokenContainer {
@@ -85,7 +104,6 @@ public class GatewayController {
         public String getToken() {
             return token;
         }
-
         public void setToken(String token) {
             this.token = token;
         }
@@ -113,26 +131,24 @@ public class GatewayController {
             logger.warn("Request to parse empty or null JWT : {} failed : {}", token, exception.getMessage());
             return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
         } catch (EntityNotFoundException exception) {
-            logger.warn(exception.toString());
+            logger.warn(Arrays.toString(exception.getStackTrace()));
             return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
         }
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    private void parseToken(String token) {
+    private void parseToken(String token) throws EntityNotFoundException{
         Jws<Claims> parsedToken = Jwts.parser()
                 .setSigningKey(SecurityConstants.JWT_SECRET.getBytes())
                 .parseClaimsJws(token);
 
-        String username = parsedToken
-                .getBody()
-                .getSubject();
+        String username = parsedToken.getBody().get("username").toString();
+        String email = parsedToken.getBody().get("email").toString();
 
-        String mail = parsedToken.getBody().get(username).toString();
-
-        if (!StringUtils.isEmpty(mail)) {
-            userService.verifyMail(username);
-            logger.info("verified Email " + mail + " for User " + username);
+        if (!StringUtils.isEmpty(email) && !StringUtils.isEmpty(username)) {
+            userService.verifyUser(username);
+            userDataService.setVerifiedEmail(username,email);
+            logger.info("verified Email " + email + " for User " + username);
         }
     }
 

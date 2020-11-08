@@ -31,16 +31,18 @@ public class UserDetailsManagerImpl implements UserDetailsManager {
         this.authenticationManager = authenticationManager;
     }
 
-    public void verifyMail(String username){
-        if(userExists(username)){
-            userRepository.findByUsername(username).setEnabled(true);
-        }
-        else throw new EntityNotFoundException("Username didn't belong to a user");
+    public void verifyUser(String username) throws EntityNotFoundException {
+        if (userExists(username)) {
+            UserImpl user = userRepository.findByUsername(username);
+            user.setEnabled(true);
+            userRepository.saveAndFlush(user);
+            logger.info("Enabled UserAccount of User: " + username);
+        } else throw new EntityNotFoundException("Username didn't belong to a user");
     }
 
 
     @Autowired
-    UserDetailsManagerImpl( UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    UserDetailsManagerImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -64,9 +66,9 @@ public class UserDetailsManagerImpl implements UserDetailsManager {
     @Override
     public void createUser(UserDetails userDetails) {
         if (!userExists(userDetails.getUsername())) {
-            logger.info("Saving a User to the DB with username: "+userDetails.getUsername());
-            userRepository.save(UserImpl.from(userDetails));
-            logger.info("Saved User: "+ userDetails.getUsername());
+            logger.info("Saving a User to the DB with username: " + userDetails.getUsername());
+            userRepository.saveAndFlush(UserImpl.from(userDetails));
+            logger.info("Saved User: " + userDetails.getUsername());
         }
     }
 
@@ -115,6 +117,7 @@ public class UserDetailsManagerImpl implements UserDetailsManager {
 
     /**
      * Deletes a User from the DB
+     *
      * @param username the username of the user
      */
 
@@ -159,7 +162,7 @@ public class UserDetailsManagerImpl implements UserDetailsManager {
     /**
      * Deletes all the Users from the DB
      */
-    public void clearALL(){
+    public void clearALL() {
         userRepository.deleteAll();
         userRepository.flush();
     }
