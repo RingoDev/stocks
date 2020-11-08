@@ -41,7 +41,6 @@ public class StocksService {
     public void insertStocks(String folder) {
 
         logger.info("Inserting Stocks from " + folder);
-        if (List.of(env.getActiveProfiles()).contains("prod")) folder = "/home/" + folder;
 
         File f = new File(folder);
         String[] pathNames = f.list();
