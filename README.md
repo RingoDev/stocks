@@ -1,17 +1,8 @@
 # Stocks-WebApp
 
-## Backend
 
-### Development
-
-* [x] Decide on the storage - Sequel or nonSequel
-  * [x] MySQL  
-  * [ ] MongoDB
-
-#### set up MySQL DB
-
-* [x] Install MySQL DB on local machine
-
+## Notes
+Setting up mysql container
 ```
 docker run --name=mysql1 -d mysql/mysql-server
 docker logs mysql1 2>&1 | grep GENERATED
@@ -131,11 +122,12 @@ docker run --name spring1 \
 
 * setup ssl/tls to enable https
 
-* [ ] Install Docker
-* [ ] Install MySQL DockerImage
-* [ ] Install Spring-Boot DockerImage
+* [x] Install Docker
+* [x] Install MySQL DockerImage
+* [x] Install Spring-Boot DockerImage
   * [ ] Set Memory constraints
-* [ ] give Spring Boot access to Stock .csv files -> [stackoverflow](https://bit.ly/3jnzXAw)
-* [ ] Populate MySQL Table
+* [x] give Spring Boot access to Stock .csv files -> [stackoverflow](https://bit.ly/3jnzXAw)
+* [x] Populate MySQL Table
 * [ ] Install Jenkins
-* [ ] Configure CI pipeline: local Development -> Github -> Linode Instance
+* [x] set up Watchtower to pull Docker Images
+* [x] Configure CI pipeline: local Development -> Github -> Linode Instance
