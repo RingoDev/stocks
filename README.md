@@ -1,5 +1,7 @@
 # Stocks-WebApp
 
+The Backend for my Stocks Application written with Java Spring Boot
+
 
 ## Notes
 Setting up mysql container
